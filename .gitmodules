@@ -1,0 +1,3 @@
+[submodule "data/raw/suttacentral"]
+	path = data/raw/suttacentral
+	url = https://github.com/suttacentral/sc-data
