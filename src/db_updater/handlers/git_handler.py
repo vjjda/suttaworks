@@ -8,22 +8,25 @@ log = logging.getLogger(__name__)
 
 def _run_command(command: list[str], cwd: Path):
     """
-    Chạy một lệnh và đọc output theo từng ký tự để xử lý \r và \n,
-    đảm bảo hiển thị tiến trình thời gian thực.
+    Chạy một lệnh và xử lý output thời gian thực, với bufsize=1
+    để yêu cầu line-buffering.
     """
     log.info(f"Đang chạy lệnh: {' '.join(command)}")
     try:
+        # ---- THAY ĐỔI DUY NHẤT: Thêm bufsize=1 ----
         proc = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             encoding='utf-8',
-            errors='replace', # Tránh lỗi nếu có ký tự không hợp lệ
-            cwd=cwd
+            errors='replace',
+            cwd=cwd,
+            bufsize=1 # Yêu cầu line-buffering
         )
+        # --------------------------------------------
 
-        # Xử lý đồng thời stdout và stderr
+        # Phần code còn lại xử lý output giữ nguyên
         streams = {'stdout': proc.stdout, 'stderr': proc.stderr}
         output_buffers = {'stdout': '', 'stderr': ''}
 
@@ -32,19 +35,13 @@ def _run_command(command: list[str], cwd: Path):
                 if stream:
                     char = stream.read(1)
                     if char:
-                        # Thêm ký tự vào buffer
                         output_buffers[stream_name] += char
-                        # Nếu gặp ký tự xuống dòng hoặc quay về đầu dòng
                         if char in ['\n', '\r']:
-                            # In buffer ra, dùng end='' để print không tự thêm \n
-                            # flush=True để đảm bảo hiển thị ngay lập tức
                             print(output_buffers[stream_name].strip(), end='\r', flush=True)
                             log.debug(output_buffers[stream_name].strip())
-                            # Xóa buffer
                             output_buffers[stream_name] = ''
         
-        # In nốt phần còn lại trong buffer (nếu có)
-        print() # In một dòng mới để con trỏ không bị kẹt lại trên dòng progress
+        print() 
         for buffer in output_buffers.values():
             if buffer.strip():
                 log.debug(buffer.strip())
@@ -60,7 +57,7 @@ def _run_command(command: list[str], cwd: Path):
     log.info("Lệnh đã thực thi thành công.")
     return True
 
-# Hàm process_git_submodules không thay đổi
+# Hàm process_git_submodules không thay đổi...
 def process_git_submodules(submodules_config: list, project_root: Path, base_dir: Path):
     # ... (code trong hàm này giữ nguyên)
     base_dir.mkdir(parents=True, exist_ok=True)
