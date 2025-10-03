@@ -3,6 +3,8 @@ import argparse
 from pathlib import Path
 import sys
 import logging
+from src.db_updater.handlers import api_handler, gdrive_handler
+
 
 # Thêm project root vào sys.path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -59,6 +61,11 @@ def main():
         if module_type == "api":
             destination_dir = RAW_DATA_PATH / module_name
             api_handler.process_api_data(module_config[module_type], destination_dir)
+        elif module_type == "google-drive":
+            destination_dir = RAW_DATA_PATH / module_name
+            gdrive_handler.process_gdrive_data(module_config[module_type], destination_dir)
+        # ----------------------------
+
         else:
             log.warning(f"Chưa hỗ trợ loại module '{module_type}'. Bỏ qua.")
 

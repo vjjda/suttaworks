@@ -1,9 +1,11 @@
 git-submodule:
   - suttacentral: https://github.com/suttacentral/sc-data
   - cips: https://github.com/thesunshade/CIPS
-bw:
-  google-drive: 
-    - zip: https://drive.google.com/drive/folders/17DZmO3PaN_bXPyDuQGRkX4dcYQ0tXhe8
+buddha-words:
+  google-drive:
+    zip: https://drive.google.com/drive/folders/17DZmO3PaN_bXPyDuQGRkX4dcYQ0tXhe8
+    version-date: '(?:bw)(\d+)\.(?:7z|zip)$'
+    extract: "bw"
 suttaplex:
   api:
     sutta-json:

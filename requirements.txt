@@ -1,2 +1,6 @@
+# requirements.txt
 httpx
 pyyaml
+gdown
+python-dotenv
+google-api-python-client
