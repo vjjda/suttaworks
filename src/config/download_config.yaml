@@ -1,0 +1,40 @@
+git-submodule:
+  - suttacentral: https://github.com/suttacentral/sc-data
+  - cips: https://github.com/thesunshade/CIPS
+bw:
+  google-drive: 
+    - zip: https://drive.google.com/drive/folders/17DZmO3PaN_bXPyDuQGRkX4dcYQ0tXhe8
+suttaplex:
+  api:
+    sutta-json:
+      - dn: https://suttacentral.net/api/suttaplex/dn
+      - mn: https://suttacentral.net/api/suttaplex/mn
+      - sn: https://suttacentral.net/api/suttaplex/sn
+      - an: https://suttacentral.net/api/suttaplex/an
+      - kn: https://suttacentral.net/api/suttaplex/kn
+      - bv: https://suttacentral.net/api/suttaplex/bv
+      - cnd: https://suttacentral.net/api/suttaplex/cnd
+      - cp: https://suttacentral.net/api/suttaplex/cp
+      - dhp: https://suttacentral.net/api/suttaplex/dhp
+      - iti: https://suttacentral.net/api/suttaplex/iti
+      - ja: https://suttacentral.net/api/suttaplex/ja
+      - kp: https://suttacentral.net/api/suttaplex/kp
+      - mil: https://suttacentral.net/api/suttaplex/mil
+      - mnd: https://suttacentral.net/api/suttaplex/mnd
+      - ne: https://suttacentral.net/api/suttaplex/ne
+      - pe: https://suttacentral.net/api/suttaplex/pe
+      - ps: https://suttacentral.net/api/suttaplex/ps
+      - pv: https://suttacentral.net/api/suttaplex/pv
+      - snp: https://suttacentral.net/api/suttaplex/snp
+      - tha-ap: https://suttacentral.net/api/suttaplex/tha-ap
+      - thag: https://suttacentral.net/api/suttaplex/thag
+      - thi-ap: https://suttacentral.net/api/suttaplex/thi-ap
+      - thig: https://suttacentral.net/api/suttaplex/thig
+      - ud: https://suttacentral.net/api/suttaplex/ud
+      - vv: https://suttacentral.net/api/suttaplex/vv
+    vinaya-json:
+      - pli-tv-vi: https://suttacentral.net/api/suttaplex/pli-tv-vi
+bmc:
+  crawl: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
+dhammatalk:
+  crawl: https://www.dhammatalks.org/suttas/

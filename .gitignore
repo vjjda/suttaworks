@@ -1,0 +1,24 @@
+# Môi trường ảo Python
+venv/
+*.venv
+env/
+.env
+
+# Files của macOS
+.DS_Store
+
+# Thư mục cache của Python
+__pycache__/
+*.py[cod]
+
+# Dữ liệu đã xử lý (không nên đưa vào git)
+data/processed/
+
+# File cấu hình local (nếu có)
+config.local.ini
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
