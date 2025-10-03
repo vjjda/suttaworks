@@ -9,13 +9,13 @@ sys.path.append(str(PROJECT_ROOT))
 
 from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
-# Thêm import cho git_handler
 from src.db_updater.handlers import api_handler, gdrive_handler, git_handler
 
 setup_logging()
 log = logging.getLogger(__name__)
 
-CONFIG_PATH = PROJECT_ROOT / "src/config/download_config.yaml"
+# --- THAY ĐỔI 1: Cập nhật tên file config ---
+CONFIG_PATH = PROJECT_ROOT / "src/config/updater_config.yaml"
 RAW_DATA_PATH = PROJECT_ROOT / "data/raw"
 
 def main():
@@ -38,35 +38,28 @@ def main():
             return
 
         module_config = config[module_name]
-
-        # ---- THAY ĐỔI LOGIC ĐIỀU PHỐI ----
         destination_dir = RAW_DATA_PATH / module_name
         
-        # Trường hợp 1: Config là một dictionary có key con chỉ định loại handler
-        if isinstance(module_config, dict):
-            module_type = list(module_config.keys())[0]
-            log.info(f"Bắt đầu cập nhật module '{module_name}' với loại '{module_type}'...")
-            
-            if module_type == "api":
-                api_handler.process_api_data(module_config[module_type], destination_dir)
-            elif module_type == "google-drive":
-                gdrive_handler.process_gdrive_data(module_config[module_type], destination_dir)
-            else:
-                log.warning(f"Chưa hỗ trợ loại handler '{module_type}' trong dictionary config.")
+        # --- THAY ĐỔI 2: Giản lược logic điều phối ---
+        # Logic bây giờ nhất quán cho tất cả các module
+        if not isinstance(module_config, dict):
+            log.warning(f"Cấu trúc config cho module '{module_name}' không hợp lệ. Cần phải là một dictionary.")
+            return
+
+        # Lấy ra loại handler từ key đầu tiên
+        module_type = list(module_config.keys())[0]
+        handler_config = module_config[module_type]
+        log.info(f"Bắt đầu cập nhật module '{module_name}' với handler '{module_type}'...")
         
-        # Trường hợp 2: Config là một list, tên module chính là loại handler
-        elif isinstance(module_config, list):
-            module_type = module_name
-            log.info(f"Bắt đầu cập nhật module '{module_name}' với loại '{module_type}'...")
-
-            if module_type == "git-submodule":
-                git_handler.process_git_submodules(module_config, PROJECT_ROOT, destination_dir)
-            else:
-                 log.warning(f"Chưa hỗ trợ loại handler '{module_type}' trong list config.")
-        # -------------------------------------
-
+        if module_type == "api":
+            api_handler.process_api_data(handler_config, destination_dir)
+        elif module_type == "google-drive":
+            gdrive_handler.process_gdrive_data(handler_config, destination_dir)
+        elif module_type == "sub-submodule": # <-- Tên handler mới cho git
+            git_handler.process_git_submodules(handler_config, PROJECT_ROOT, destination_dir)
         else:
-            log.warning(f"Cấu trúc config cho module '{module_name}' không được hỗ trợ.")
+            log.warning(f"Chưa hỗ trợ loại handler '{module_type}'.")
+        # ---------------------------------------------------
 
         log.info("Hoàn tất!")
 

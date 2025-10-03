@@ -1,8 +1,13 @@
 # Path: src/config/download_config.yaml
 
-git-submodule:
-  - suttacentral-data: https://github.com/suttacentral/sc-data
-  - cips: https://github.com/thesunshade/CIPS
+# Path: src/config/updater_config.yaml
+
+git:
+  sub-submodule:
+    - cips: https://github.com/thesunshade/CIPS
+    - suttacentral-data: https://github.com/suttacentral/sc-data
+  release:
+    - dpd: 
 buddha-words:
   google-drive:
     zip: https://drive.google.com/drive/folders/17DZmO3PaN_bXPyDuQGRkX4dcYQ0tXhe8
