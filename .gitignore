@@ -12,7 +12,9 @@ __pycache__/
 *.py[cod]
 
 # Dữ liệu đã xử lý (không nên đưa vào git)
-data/processed/
+data/raw
+
+logs/
 
 # File cấu hình local (nếu có)
 config.local.ini
