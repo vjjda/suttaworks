@@ -11,12 +11,18 @@ suttaplex:
       - mn: https://suttacentral.net/api/suttaplex/mn
       - sn: https://suttacentral.net/api/suttaplex/sn
       - an: https://suttacentral.net/api/suttaplex/an
+      - dhp: https://suttacentral.net/api/suttaplex/dhp
+      - iti: https://suttacentral.net/api/suttaplex/iti
+      - snp: https://suttacentral.net/api/suttaplex/snp
+      - thag: https://suttacentral.net/api/suttaplex/thag
+      - thig: https://suttacentral.net/api/suttaplex/thig
+      - ud: https://suttacentral.net/api/suttaplex/ud
+    kn-full-json:
       - kn: https://suttacentral.net/api/suttaplex/kn
+    kn-late-json:
       - bv: https://suttacentral.net/api/suttaplex/bv
       - cnd: https://suttacentral.net/api/suttaplex/cnd
       - cp: https://suttacentral.net/api/suttaplex/cp
-      - dhp: https://suttacentral.net/api/suttaplex/dhp
-      - iti: https://suttacentral.net/api/suttaplex/iti
       - ja: https://suttacentral.net/api/suttaplex/ja
       - kp: https://suttacentral.net/api/suttaplex/kp
       - mil: https://suttacentral.net/api/suttaplex/mil
@@ -25,12 +31,8 @@ suttaplex:
       - pe: https://suttacentral.net/api/suttaplex/pe
       - ps: https://suttacentral.net/api/suttaplex/ps
       - pv: https://suttacentral.net/api/suttaplex/pv
-      - snp: https://suttacentral.net/api/suttaplex/snp
       - tha-ap: https://suttacentral.net/api/suttaplex/tha-ap
-      - thag: https://suttacentral.net/api/suttaplex/thag
       - thi-ap: https://suttacentral.net/api/suttaplex/thi-ap
-      - thig: https://suttacentral.net/api/suttaplex/thig
-      - ud: https://suttacentral.net/api/suttaplex/ud
       - vv: https://suttacentral.net/api/suttaplex/vv
     vinaya-json:
       - pli-tv-vi: https://suttacentral.net/api/suttaplex/pli-tv-vi
