@@ -11,8 +11,11 @@ env/
 __pycache__/
 *.py[cod]
 
-# Dữ liệu đã xử lý (không nên đưa vào git)
-data/raw/
+# Bỏ qua TẤT CẢ CÁC FILE VÀ THƯ MỤC CON bên trong data/raw/
+/data/raw/*
+
+# NHƯNG đừng bỏ qua thư mục git-submodule
+!/data/raw/git-submodule
 
 logs/
 
