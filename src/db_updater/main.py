@@ -1,0 +1,68 @@
+# Path: /src/db_updater/main.py
+import argparse
+from pathlib import Path
+import sys
+import logging
+
+# Thêm project root vào sys.path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))
+
+from src.config.logging_config import setup_logging
+from src.db_updater.config_parser import load_config
+from src.db_updater.handlers import api_handler
+
+# ---- Cấu hình logging ngay từ đầu ----
+setup_logging()
+# -------------------------------------
+
+log = logging.getLogger(__name__)
+
+CONFIG_PATH = PROJECT_ROOT / "src/config/download_config.yaml"
+RAW_DATA_PATH = PROJECT_ROOT / "data/raw"
+
+def main():
+    # 1. Thiết lập trình phân tích đối số (argument parser)
+    parser = argparse.ArgumentParser(description="Công cụ dòng lệnh để cập nhật dữ liệu thô cho dự án.")
+    subparsers = parser.add_subparsers(dest='command', required=True, help='Các lệnh có sẵn')
+
+    # 2. Định nghĩa lệnh 'update'
+    parser_update = subparsers.add_parser('update', help='Chạy một module cập nhật.')
+    parser_update.add_argument(
+        '-m', '--module',
+        required=True,
+        help="Tên module cần cập nhật (ví dụ: 'suttaplex')."
+    )
+
+    # 3. Phân tích các đối số từ dòng lệnh
+    args = parser.parse_args()
+
+    # 4. Xử lý logic dựa trên lệnh được gọi
+    if args.command == 'update':
+        module_name = args.module
+        log.info(f"Yêu cầu cập nhật cho module: {module_name}")
+        
+        config = load_config(CONFIG_PATH)
+        if not config:
+            return  # Dừng thực thi nếu không có config
+
+        if module_name not in config:
+            log.error(f"Không tìm thấy module '{module_name}' trong file cấu hình.")
+            log.info(f"Các module hiện có: {list(config.keys())}")
+            return
+
+        module_config = config[module_name]
+        module_type = list(module_config.keys())[0]
+        
+        log.info(f"Bắt đầu cập nhật module '{module_name}' với loại '{module_type}'...")
+
+        if module_type == "api":
+            destination_dir = RAW_DATA_PATH / module_name
+            api_handler.process_api_data(module_config[module_type], destination_dir)
+        else:
+            log.warning(f"Chưa hỗ trợ loại module '{module_type}'. Bỏ qua.")
+
+        log.info("Hoàn tất!")
+
+if __name__ == "__main__":
+    main()
