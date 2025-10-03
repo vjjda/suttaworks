@@ -1,0 +1,6 @@
+[submodule "data/raw/git-submodule/suttacentral-data"]
+	path = data/raw/git-submodule/suttacentral-data
+	url = https://github.com/suttacentral/sc-data
+[submodule "data/raw/git-submodule/cips"]
+	path = data/raw/git-submodule/cips
+	url = https://github.com/thesunshade/CIPS

@@ -12,7 +12,7 @@ __pycache__/
 *.py[cod]
 
 # Dữ liệu đã xử lý (không nên đưa vào git)
-data/raw
+data/raw/
 
 logs/
 

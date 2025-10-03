@@ -1,5 +1,7 @@
+# Path: src/config/download_config.yaml
+
 git-submodule:
-  - suttacentral: https://github.com/suttacentral/sc-data
+  - suttacentral-data: https://github.com/suttacentral/sc-data
   - cips: https://github.com/thesunshade/CIPS
 buddha-words:
   google-drive:
@@ -38,7 +40,7 @@ suttaplex:
       - vv: https://suttacentral.net/api/suttaplex/vv
     vinaya-json:
       - pli-tv-vi: https://suttacentral.net/api/suttaplex/pli-tv-vi
-bmc:
-  crawl: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
-dhammatalk:
-  crawl: https://www.dhammatalks.org/suttas/
+dhammatalks:
+  crawl:
+    - bmc: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
+    - thanissaro-sutta: https://www.dhammatalks.org/suttas/
