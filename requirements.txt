@@ -4,3 +4,4 @@ pyyaml
 gdown
 python-dotenv
 google-api-python-client
+tqdm
