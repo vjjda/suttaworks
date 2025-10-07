@@ -1,7 +1,5 @@
 # Path: src/config/download_config.yaml
 
-# Path: src/config/updater_config.yaml
-
 git:
   sub-submodule:
     - cips: https://github.com/thesunshade/CIPS
