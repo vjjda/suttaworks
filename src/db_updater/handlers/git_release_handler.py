@@ -14,10 +14,6 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
-# --- Các hàm helper từ _get_github_headers đến _get_local_state giữ nguyên ---
-# ...
-# ... (Toàn bộ các hàm helper không thay đổi)
-# ...
 def _get_github_headers() -> dict | None:
     load_dotenv()
     token = os.getenv("GITHUB_TOKEN")
@@ -84,9 +80,7 @@ def _download_file(url: str, dest_path: Path, headers: dict | None):
     except requests.exceptions.RequestException as e:
         log.error(f"Tải file thất bại: {e}")
         raise
-# ---
 
-# CHANGED: Cập nhật hàm giải nén để hỗ trợ .epub và nhận lệnh giải nén
 def _decompress_archive(archive_path: Path, extract_dir: Path, force_extract: bool, auto_extract: bool):
     """
     Tự động giải nén file.
