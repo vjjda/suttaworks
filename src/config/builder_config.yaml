@@ -1,0 +1,8 @@
+# Path: src/config/builder_config.yaml
+
+sqlite:
+  json: /Users/hieucao/Codes/suttacentral-vj/data/raw/suttaplex
+  tree: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree
+  translations:
+    lang: pli, en, jpn, vn, zh
+  
