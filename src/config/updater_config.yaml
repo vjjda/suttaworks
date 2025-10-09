@@ -1,4 +1,4 @@
-# Path: src/config/download_config.yaml
+# Path: src/config/updater_config.yaml
 
 git:
   sub-submodule:
@@ -32,8 +32,6 @@ suttaplex:
       - thag: https://suttacentral.net/api/suttaplex/thag
       - thig: https://suttacentral.net/api/suttaplex/thig
       - ud: https://suttacentral.net/api/suttaplex/ud
-    kn-full-json:
-      - kn: https://suttacentral.net/api/suttaplex/kn
     kn-late-json:
       - bv: https://suttacentral.net/api/suttaplex/bv
       - cnd: https://suttacentral.net/api/suttaplex/cnd
@@ -51,7 +49,9 @@ suttaplex:
       - vv: https://suttacentral.net/api/suttaplex/vv
     vinaya-json:
       - pli-tv-vi: https://suttacentral.net/api/suttaplex/pli-tv-vi
-dhammatalks:
-  crawl:
-    - bmc: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
-    - thanissaro-sutta: https://www.dhammatalks.org/suttas/
+# dhammatalks:
+#   crawl:
+#     - bmc: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
+#       root: https://www.dhammatalks.org/vinaya/bmc
+#     - suttas: https://www.dhammatalks.org/suttas/
+#       root: https://www.dhammatalks.org/suttas
