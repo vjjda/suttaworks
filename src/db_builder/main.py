@@ -4,15 +4,12 @@
 import logging
 from pathlib import Path
 
-# Thêm src vào sys.path để có thể import từ các thư mục khác
-import sys
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(PROJECT_ROOT))
-
-from config.logging_config import setup_logging
-from db_builder.config_loader import load_config
-from db_builder.database_manager import DatabaseManager
-from db_builder.processors.hierarchy_processor import HierarchyProcessor # <-- IMPORT MỚI
+# --- Sửa lỗi import bằng cách chạy với -m ---
+from src.config.constants import PROJECT_ROOT, CONFIG_PATH
+from src.config.logging_config import setup_logging
+from src.db_builder.config_loader import load_config
+from src.db_builder.database_manager import DatabaseManager
+from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -22,22 +19,25 @@ def main():
     logger.info("▶️ Bắt đầu chương trình xây dựng database...")
     
     try:
-        # 1. Tải cấu hình
-        config_file_path = PROJECT_ROOT / "config" / "builder_config.yaml"
-        db_config = load_config(config_file_path)
+        config_file_path = CONFIG_PATH / "builder_config.yaml"
         
-        # 2. Khởi tạo DatabaseManager và tạo bảng
-        db_path = Path(db_config['path']) / db_config['name']
+        # --- THAY ĐỔI Ở ĐÂY ---
+        # Code cũ:
+        # config = load_config(config_file_path)
+        # db_config = config['suttacentral-sqlite']
+
+        # Code mới:
+        # Hàm load_config đã trả về đúng phần chúng ta cần
+        db_config = load_config(config_file_path)
+        # --- KẾT THÚC THAY ĐỔI ---
+        
+        db_path = PROJECT_ROOT / db_config['path'] / db_config['name']
         logger.info(f"Database sẽ được tạo tại: {db_path}")
 
         with DatabaseManager(db_path) as db_manager:
             db_manager.create_hierarchy_table()
-
-            # 3. Khởi tạo và chạy HierarchyProcessor
             processor = HierarchyProcessor(db_config['tree'])
             nodes_data = processor.process_trees()
-
-            # 4. Ghi dữ liệu đã xử lý vào database
             if nodes_data:
                 db_manager.insert_hierarchy_nodes(nodes_data)
 

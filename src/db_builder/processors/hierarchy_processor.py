@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 from collections import defaultdict
 
+# --- THAY ĐỔI DUY NHẤT: Import PROJECT_ROOT ---
+from src.config.constants import PROJECT_ROOT
+
 logger = logging.getLogger(__name__)
 
 class HierarchyProcessor:
@@ -42,7 +45,8 @@ class HierarchyProcessor:
     def process_trees(self) -> List[Dict[str, Any]]:
         """Bắt đầu quá trình xử lý."""
         # --- Bước 1: "Học" từ super-tree.json ---
-        super_tree_path = Path(self.tree_config[0]['super-tree'])
+        relative_super_tree_path = self.tree_config[0]['super-tree']
+        super_tree_path = PROJECT_ROOT / relative_super_tree_path
         with open(super_tree_path, 'r', encoding='utf-8') as f:
             super_tree_data = json.load(f)
         self._learn_super_tree(super_tree_data, parent_uid=None, pitaka_root=None)
