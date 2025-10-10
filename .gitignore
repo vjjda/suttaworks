@@ -17,6 +17,8 @@ __pycache__/
 # NHƯNG đừng bỏ qua thư mục git-submodule
 !/data/raw/git-submodule
 
+/data/processed/*
+
 logs/
 
 # File cấu hình local (nếu có)
