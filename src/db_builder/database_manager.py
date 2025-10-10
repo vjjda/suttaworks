@@ -4,6 +4,7 @@
 import sqlite3
 import logging
 from pathlib import Path
+from typing import Any, Dict, List # <--- THÊM DÒNG NÀY
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +74,48 @@ class DatabaseManager:
         sql = """
         CREATE TABLE IF NOT EXISTS Hierarchy (
             uid TEXT PRIMARY KEY,
-            parent_uid TEXT REFERENCES Hierarchy(uid),
+            parent_uid TEXT,
             position INTEGER,
-            title TEXT,
-            node_type TEXT
+            type TEXT,
+            pitaka_root TEXT,
+            book_root TEXT,
+            depth INTEGER, -- <--- THAY ĐỔI 1: THÊM CỘT MỚI
+            prev_uid TEXT,
+            next_uid TEXT
         );
         """
         self.create_table(sql)
+
+    def insert_hierarchy_nodes(self, nodes: List[Dict[str, Any]]):
+        """Chèn một danh sách các node vào bảng Hierarchy."""
+        if not nodes:
+            logger.warning("Không có node nào để chèn vào Hierarchy.")
+            return
+
+        logger.info(f"Chuẩn bị chèn/cập nhật {len(nodes)} hàng vào bảng Hierarchy...")
+        
+        # --- THAY ĐỔI 2: CẬP NHẬT CÂU LỆNH INSERT VÀ LOGIC CHUẨN BỊ DỮ LIỆU ---
+        sql = """
+        INSERT OR REPLACE INTO Hierarchy (uid, parent_uid, position, type, pitaka_root, book_root, depth, prev_uid, next_uid)
+        VALUES (:uid, :parent_uid, :position, :type, :pitaka_root, :book_root, :depth, :prev_uid, :next_uid);
+        """
+        
+        try:
+            # Cập nhật thứ tự các cột để bao gồm 'depth'
+            column_order = (
+                'uid', 'parent_uid', 'position', 'type', 
+                'pitaka_root', 'book_root', 'depth', 'prev_uid', 'next_uid'
+            )
+            
+            # Tạo list of dicts với đầy đủ các key, đảm bảo thứ tự
+            data_dicts = []
+            for n in nodes:
+                data_dicts.append({key: n.get(key) for key in column_order})
+
+            cursor = self.conn.cursor()
+            cursor.executemany(sql, data_dicts)
+            self.conn.commit()
+            logger.info(f"✅ Đã chèn/cập nhật thành công {cursor.rowcount} hàng.")
+        except sqlite3.Error as e:
+            logger.error(f"Lỗi khi chèn hàng loạt vào Hierarchy: {e}")
+            raise

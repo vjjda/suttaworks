@@ -11,7 +11,8 @@ sys.path.append(str(PROJECT_ROOT))
 
 from config.logging_config import setup_logging
 from db_builder.config_loader import load_config
-from db_builder.database_manager import DatabaseManager # <-- IMPORT MỚI
+from db_builder.database_manager import DatabaseManager
+from db_builder.processors.hierarchy_processor import HierarchyProcessor # <-- IMPORT MỚI
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +26,23 @@ def main():
         config_file_path = PROJECT_ROOT / "config" / "builder_config.yaml"
         db_config = load_config(config_file_path)
         
-        # 2. Chuẩn bị đường dẫn và khởi tạo DatabaseManager
+        # 2. Khởi tạo DatabaseManager và tạo bảng
         db_path = Path(db_config['path']) / db_config['name']
         logger.info(f"Database sẽ được tạo tại: {db_path}")
 
-        # 3. Sử dụng 'with' để quản lý kết nối database
         with DatabaseManager(db_path) as db_manager:
-            # Tạo bảng Hierarchy
             db_manager.create_hierarchy_table()
 
-        # (Các bước xử lý JSON sẽ được thêm vào đây)
+            # 3. Khởi tạo và chạy HierarchyProcessor
+            processor = HierarchyProcessor(db_config['tree'])
+            nodes_data = processor.process_trees()
+
+            # 4. Ghi dữ liệu đã xử lý vào database
+            if nodes_data:
+                db_manager.insert_hierarchy_nodes(nodes_data)
 
     except Exception as e:
-        logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại: {e}", exc_info=True)
+        logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
     else:
         logger.info("✅ Hoàn tất chương trình xây dựng database.")
 
