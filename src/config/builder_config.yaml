@@ -1,8 +1,13 @@
 # Path: src/config/builder_config.yaml
 
-sqlite:
-  json: /Users/hieucao/Codes/suttacentral-vj/data/raw/suttaplex
-  tree: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree
-  translations:
-    lang: pli, en, jpn, vn, zh
+suttacentral-sqlite:
+  path: /Users/hieucao/Codes/suttacentral-vj/data/processed
+  name: suttacentral.sqlite
+  tree: 
+    - super-tree: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree/super-tree.json
+    - sutta: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree/sutta
+    - vinaya: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree/vinaya
+    - abhidhamma: /Users/hieucao/Codes/suttacentral-vj/data/raw/git/suttacentral-data/structure/tree/abhidhamma
+  sutta: "to be done"
+  translations: "to be done"
   

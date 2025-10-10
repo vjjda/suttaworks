@@ -1,0 +1,51 @@
+# Path: src/db_builder/config_loader.py
+#!/usr/bin/env python3
+
+import yaml
+import logging
+from pathlib import Path
+
+# Khởi tạo logger cho module này
+logger = logging.getLogger(__name__)
+
+def load_config(config_path: Path) -> dict:
+    """
+    Tải và xác thực file cấu hình YAML.
+
+    Args:
+        config_path: Đường dẫn đến file builder_config.yaml.
+
+    Returns:
+        Một dictionary chứa cấu hình đã được xác thực.
+    
+    Raises:
+        FileNotFoundError: Nếu file config không tồn tại.
+        ValueError: Nếu thiếu các khóa cấu hình quan trọng.
+    """
+    try:
+        logger.info(f"Đang đọc file cấu hình từ: {config_path}")
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        # --- Xác thực cấu hình ---
+        if 'suttacentral-sqlite' not in config:
+            raise ValueError("Thiếu khóa chính 'suttacentral-sqlite' trong file config.")
+        
+        db_config = config['suttacentral-sqlite']
+        required_keys = ['path', 'name', 'tree']
+        for key in required_keys:
+            if key not in db_config:
+                raise ValueError(f"Thiếu khóa '{key}' bên trong 'suttacentral-sqlite'.")
+
+        logger.info("✅ Đọc và xác thực file cấu hình thành công.")
+        return db_config
+
+    except FileNotFoundError:
+        logger.error(f"Lỗi: Không tìm thấy file cấu hình tại '{config_path}'.")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Lỗi: File cấu hình YAML không hợp lệ: {e}")
+        raise
+    except ValueError as e:
+        logger.error(f"Lỗi: Cấu hình không hợp lệ. {e}")
+        raise
