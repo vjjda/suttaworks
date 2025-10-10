@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
 
 class HierarchyProcessor:
     """Xử lý các file JSON tree để xây dựng dữ liệu cho bảng Hierarchy."""
-
+    CANONICAL_PARENTS = {
+        'dhp': 'kn'
+        # Thêm các quy tắc khác ở đây nếu cần trong tương lai
+    }
+    
     def __init__(self, tree_config: List[Dict[str, Any]]):
         self.tree_config = tree_config
         self.nodes: List[Dict[str, Any]] = []
@@ -42,6 +46,17 @@ class HierarchyProcessor:
             if pitaka_root: self.pitaka_map[data] = pitaka_root
             if parent_uid: self.book_parents[data] = parent_uid
 
+    def _apply_canonical_rules(self):
+        """Ghi đè lại các parent đã học theo bản đồ quy tắc."""
+        logger.info("Áp dụng các quy tắc cha-con chính tắc...")
+        for child, parent in self.CANONICAL_PARENTS.items():
+            if child in self.book_parents and self.book_parents[child] != parent:
+                logger.warning(
+                    f"QUY TẮC GHI ĐÈ: Thay đổi cha của '{child}' "
+                    f"từ '{self.book_parents[child]}' thành '{parent}'."
+                )
+            self.book_parents[child] = parent
+            
     def process_trees(self) -> List[Dict[str, Any]]:
         """Bắt đầu quá trình xử lý."""
         # --- Bước 1: "Học" từ super-tree.json ---
@@ -50,7 +65,8 @@ class HierarchyProcessor:
         with open(super_tree_path, 'r', encoding='utf-8') as f:
             super_tree_data = json.load(f)
         self._learn_super_tree(super_tree_data, parent_uid=None, pitaka_root=None)
-
+        self._apply_canonical_rules()
+        
         # --- Bước 2: Xử lý tất cả các tree để tạo node ---
         all_files = [super_tree_path]
         # ... (giữ nguyên logic tập hợp file)
@@ -66,7 +82,11 @@ class HierarchyProcessor:
                 continue
             self._process_file(file_path)
 
-        # --- Bước 3: Liên kết các node theo depth level ---
+        logger.info("Tính toán global_position cho các node...")
+        for i, node in enumerate(self.nodes):
+            node['global_position'] = i
+        
+        # --- Bước cuối: Liên kết các node và tính depth_position ---
         self._link_nodes_within_books()
         return self.nodes
 
@@ -92,23 +112,20 @@ class HierarchyProcessor:
                 logger.warning(f"Bỏ qua file {file_path.name} vì cấu trúc không hợp lệ.")
 
     def _recursive_parse(self, data: Any, parent_uid: str | None, pitaka_root: str | None, book_root: str | None, depth: int, position: int):
-        """Hàm đệ quy, nhận và sử dụng 'position' được truyền vào."""
+        """Hàm đệ quy, sử dụng 'position' làm 'sibling_position'."""
         if isinstance(data, list):
-            # Khi duyệt list, index 'i' chính là position tương đối của các item con
             for i, item in enumerate(data):
                 self._recursive_parse(item, parent_uid, pitaka_root, book_root, depth, position=i)
         
         elif isinstance(data, dict):
-            # Nếu dữ liệu là một dict, nó đại diện cho một node. 
-            # `position` của nó đã được quyết định bởi vòng lặp `list` ở cấp trên.
-            # Chúng ta giả định dict này chỉ có 1 key, là uid của node.
             if len(data) == 1:
                 key = list(data.keys())[0]
                 value = data[key]
                 
                 node_pitaka_root = pitaka_root or self.pitaka_map.get(key)
                 node = {
-                    "uid": key, "parent_uid": parent_uid, "position": position, # <-- SỬ DỤNG POSITION ĐƯỢC TRUYỀN VÀO
+                    "uid": key, "parent_uid": parent_uid,
+                    "sibling_position": position, # <-- THAY ĐỔI: Đổi tên key
                     "pitaka_root": node_pitaka_root, "book_root": book_root,
                     "type": 'branch' if value else 'leaf', "depth": depth
                 }
@@ -116,13 +133,12 @@ class HierarchyProcessor:
                 
                 self.nodes.append(node)
                 self.node_lookup[key] = node
-                # Khi đệ quy xuống con, depth tăng, position của con sẽ được tính bởi vòng lặp bên trong
                 self._recursive_parse(value, key, node_pitaka_root, book_root, depth + 1, position=0)
 
         elif isinstance(data, str):
-            # Tương tự, node lá cũng sử dụng position được truyền vào từ vòng lặp list
             node = {
-                "uid": data, "parent_uid": parent_uid, "position": position, # <-- SỬ DỤNG POSITION ĐƯỢC TRUYỀN VÀO
+                "uid": data, "parent_uid": parent_uid,
+                "sibling_position": position, # <-- THAY ĐỔI: Đổi tên key
                 "pitaka_root": pitaka_root, "book_root": book_root,
                 "type": 'leaf', "depth": depth
             }
@@ -130,33 +146,24 @@ class HierarchyProcessor:
             self.node_lookup[data] = node
 
     def _link_nodes_within_books(self):
-        """
-        --- LOGIC HOÀN TOÀN MỚI ---
-        Nhóm các node theo book_root, sau đó theo depth, rồi mới tạo liên kết.
-        """
-        logger.info("Đang liên kết các node trong phạm vi từng sách (book_root)...")
+        """Nhóm node theo book_root và depth, sau đó tạo liên kết và tính depth_position."""
+        logger.info("Đang liên kết các node và tính depth_position...")
         
-        # Bước 1: Nhóm tất cả node theo book_root
         nodes_by_book = defaultdict(list)
         for node in self.nodes:
-            # Gán book_root mặc định nếu không có để tránh lỗi
             book_root_key = node.get('book_root') or 'unknown'
             nodes_by_book[book_root_key].append(node)
 
-        # Duyệt qua từng cuốn sách
         for book_root, nodes_in_book in nodes_by_book.items():
-            logger.debug(f"Đang xử lý các node trong book_root: '{book_root}'")
-            
-            # Bước 2: Trong mỗi sách, nhóm tiếp theo depth
             nodes_by_depth_in_book = defaultdict(list)
             for node in nodes_in_book:
                 nodes_by_depth_in_book[node['depth']].append(node)
 
-            # Bước 3: Tạo liên kết nội bộ trong từng nhóm depth của sách
             for depth, nodes_in_depth in nodes_by_depth_in_book.items():
-                logger.debug(f"  -> Đang liên kết {len(nodes_in_depth)} node ở depth {depth}...")
                 for i, node in enumerate(nodes_in_depth):
+                    # --- THAY ĐỔI: Gán giá trị cho depth_position và prev/next_uid ---
+                    node['depth_position'] = i
                     node['prev_uid'] = nodes_in_depth[i-1]['uid'] if i > 0 else None
                     node['next_uid'] = nodes_in_depth[i+1]['uid'] if i < len(nodes_in_depth) - 1 else None
         
-        logger.info("✅ Liên kết các node theo sách và cấp độ thành công.")
+        logger.info("✅ Liên kết và tính toán position thành công.")

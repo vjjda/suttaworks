@@ -70,16 +70,18 @@ class DatabaseManager:
         logger.info("Bảng đã được tạo hoặc đã tồn tại.")
         
     def create_hierarchy_table(self):
-        """Tạo bảng Hierarchy chuyên dụng."""
+        """Tạo bảng Hierarchy chuyên dụng với đầy đủ các cột position."""
         sql = """
         CREATE TABLE IF NOT EXISTS Hierarchy (
             uid TEXT PRIMARY KEY,
             parent_uid TEXT,
-            position INTEGER,
             type TEXT,
             pitaka_root TEXT,
             book_root TEXT,
-            depth INTEGER, -- <--- THAY ĐỔI 1: THÊM CỘT MỚI
+            depth INTEGER,
+            sibling_position INTEGER, -- <--- THAY ĐỔI
+            depth_position INTEGER,   -- <--- THAY ĐỔI
+            global_position INTEGER,  -- <--- THAY ĐỔI
             prev_uid TEXT,
             next_uid TEXT
         );
@@ -94,20 +96,27 @@ class DatabaseManager:
 
         logger.info(f"Chuẩn bị chèn/cập nhật {len(nodes)} hàng vào bảng Hierarchy...")
         
-        # --- THAY ĐỔI 2: CẬP NHẬT CÂU LỆNH INSERT VÀ LOGIC CHUẨN BỊ DỮ LIỆU ---
         sql = """
-        INSERT OR REPLACE INTO Hierarchy (uid, parent_uid, position, type, pitaka_root, book_root, depth, prev_uid, next_uid)
-        VALUES (:uid, :parent_uid, :position, :type, :pitaka_root, :book_root, :depth, :prev_uid, :next_uid);
+        INSERT OR REPLACE INTO Hierarchy (
+            uid, parent_uid, type, pitaka_root, book_root, depth,
+            sibling_position, depth_position, global_position,
+            prev_uid, next_uid
+        )
+        VALUES (
+            :uid, :parent_uid, :type, :pitaka_root, :book_root, :depth,
+            :sibling_position, :depth_position, :global_position,
+            :prev_uid, :next_uid
+        );
         """
         
         try:
-            # Cập nhật thứ tự các cột để bao gồm 'depth'
+            # --- THAY ĐỔI: Cập nhật danh sách cột ---
             column_order = (
-                'uid', 'parent_uid', 'position', 'type', 
-                'pitaka_root', 'book_root', 'depth', 'prev_uid', 'next_uid'
+                'uid', 'parent_uid', 'type', 'pitaka_root', 'book_root', 'depth',
+                'sibling_position', 'depth_position', 'global_position',
+                'prev_uid', 'next_uid'
             )
             
-            # Tạo list of dicts với đầy đủ các key, đảm bảo thứ tự
             data_dicts = []
             for n in nodes:
                 data_dicts.append({key: n.get(key) for key in column_order})
