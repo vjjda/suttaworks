@@ -1,49 +1,67 @@
-# Path: src/db_builder/main.py
-#!/usr//env python3
-
-import logging
+# Path: /src/db_updater/main.py
+import argparse
 from pathlib import Path
 import sys
+import logging
 
-# --- THAY ĐỔI 1: Import hằng số từ file tập trung ---
-# Thêm src vào sys.path để có thể import từ các thư mục khác
-PROJECT_ROOT_FROM_MAIN = Path(__file__).resolve().parents[1]
-sys.path.append(str(PROJECT_ROOT_FROM_MAIN))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(PROJECT_ROOT))
 
-from src.config.constants import PROJECT_ROOT, CONFIG_PATH
 from src.config.logging_config import setup_logging
-from src.db_builder.config_loader import load_config
-from src.db_builder.database_manager import DatabaseManager
-from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
+from src.db_updater.config_parser import load_config
+# --- THAY ĐỔI 1: Import handler mới ---
+from src.db_updater.handlers import api_handler, gdrive_handler, git_handler, git_release_handler
 
-logger = logging.getLogger(__name__)
+setup_logging()
+log = logging.getLogger(__name__)
+
+CONFIG_PATH = PROJECT_ROOT / "src/config/updater_config.yaml"
+RAW_DATA_PATH = PROJECT_ROOT / "data/raw"
 
 def main():
-    """Hàm chính điều phối quá trình xây dựng database."""
-    setup_logging()
-    logger.info("▶️ Bắt đầu chương trình xây dựng database...")
-    
-    try:
-        # 2. Tải cấu hình, sử dụng đường dẫn từ constants
-        config_file_path = CONFIG_PATH / "builder_config.yaml"
-        config = load_config(config_file_path)
-        db_config = config['suttacentral-sqlite']
+    parser = argparse.ArgumentParser(description="Công cụ dòng lệnh để cập nhật dữ liệu thô cho dự án.")
+    subparsers = parser.add_subparsers(dest='command', required=True, help='Các lệnh có sẵn')
+
+    parser_update = subparsers.add_parser('update', help='Chạy một module cập nhật.')
+    parser_update.add_argument('-m', '--module', required=True, help="Tên module cần cập nhật (ví dụ: 'suttaplex').")
+    args = parser.parse_args()
+
+    if args.command == 'update':
+        module_name = args.module
+        log.info(f"Yêu cầu cập nhật cho module: {module_name}")
         
-        # Đường dẫn database giờ cũng được tạo từ constants
-        db_path = PROJECT_ROOT / db_config['path'] / db_config['name']
-        logger.info(f"Database sẽ được tạo tại: {db_path}")
+        config = load_config(CONFIG_PATH)
+        if not config: return
+        if module_name not in config:
+            log.error(f"Không tìm thấy module '{module_name}' trong file cấu hình.")
+            log.info(f"Các module hiện có: {list(config.keys())}")
+            return
 
-        with DatabaseManager(db_path) as db_manager:
-            db_manager.create_hierarchy_table()
-            processor = HierarchyProcessor(db_config['tree'])
-            nodes_data = processor.process_trees()
-            if nodes_data:
-                db_manager.insert_hierarchy_nodes(nodes_data)
+        module_config = config[module_name]
+        destination_dir = RAW_DATA_PATH / module_name
+        
+        if not isinstance(module_config, dict):
+            log.warning(f"Cấu trúc config cho module '{module_name}' không hợp lệ. Cần phải là một dictionary.")
+            return
 
-    except Exception as e:
-        logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
-    else:
-        logger.info("✅ Hoàn tất chương trình xây dựng database.")
+        module_type = list(module_config.keys())[0]
+        handler_config = module_config[module_type]
+        log.info(f"Bắt đầu cập nhật module '{module_name}' với handler '{module_type}'...")
+        
+        # --- THAY ĐỔI 2: Thêm logic điều phối cho git-release ---
+        if module_type == "api":
+            api_handler.process_api_data(handler_config, destination_dir)
+        elif module_type == "google-drive":
+            gdrive_handler.process_gdrive_data(handler_config, destination_dir)
+        elif module_type == "sub-submodule":
+            git_handler.process_git_submodules(handler_config, PROJECT_ROOT, destination_dir)
+        elif module_type == "git-release":
+            git_release_handler.process_git_release_data(handler_config, destination_dir)
+        else:
+            log.warning(f"Chưa hỗ trợ loại handler '{module_type}'.")
+        # ---------------------------------------------------
+
+        log.info("Hoàn tất!")
 
 if __name__ == "__main__":
     main()
