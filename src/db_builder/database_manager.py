@@ -70,7 +70,7 @@ class DatabaseManager:
         logger.info("Bảng đã được tạo hoặc đã tồn tại.")
         
     def create_hierarchy_table(self):
-        """Tạo bảng Hierarchy chuyên dụng với đầy đủ các cột position."""
+        """Tạo bảng Hierarchy với pitaka_depth và book_depth."""
         sql = """
         CREATE TABLE IF NOT EXISTS Hierarchy (
             uid TEXT PRIMARY KEY,
@@ -78,10 +78,11 @@ class DatabaseManager:
             type TEXT,
             pitaka_root TEXT,
             book_root TEXT,
-            depth INTEGER,
-            sibling_position INTEGER, -- <--- THAY ĐỔI
-            depth_position INTEGER,   -- <--- THAY ĐỔI
-            global_position INTEGER,  -- <--- THAY ĐỔI
+            pitaka_depth INTEGER,   -- <--- THAY ĐỔI
+            book_depth INTEGER,     -- <--- THAY ĐỔI
+            sibling_position INTEGER,
+            depth_position INTEGER,
+            global_position INTEGER,
             prev_uid TEXT,
             next_uid TEXT
         );
@@ -91,35 +92,32 @@ class DatabaseManager:
     def insert_hierarchy_nodes(self, nodes: List[Dict[str, Any]]):
         """Chèn một danh sách các node vào bảng Hierarchy."""
         if not nodes:
-            logger.warning("Không có node nào để chèn vào Hierarchy.")
             return
 
         logger.info(f"Chuẩn bị chèn/cập nhật {len(nodes)} hàng vào bảng Hierarchy...")
         
         sql = """
         INSERT OR REPLACE INTO Hierarchy (
-            uid, parent_uid, type, pitaka_root, book_root, depth,
-            sibling_position, depth_position, global_position,
-            prev_uid, next_uid
+            uid, parent_uid, type, pitaka_root, book_root, 
+            pitaka_depth, book_depth, sibling_position, depth_position, 
+            global_position, prev_uid, next_uid
         )
         VALUES (
-            :uid, :parent_uid, :type, :pitaka_root, :book_root, :depth,
-            :sibling_position, :depth_position, :global_position,
-            :prev_uid, :next_uid
+            :uid, :parent_uid, :type, :pitaka_root, :book_root, 
+            :pitaka_depth, :book_depth, :sibling_position, :depth_position, 
+            :global_position, :prev_uid, :next_uid
         );
         """
         
         try:
             # --- THAY ĐỔI: Cập nhật danh sách cột ---
             column_order = (
-                'uid', 'parent_uid', 'type', 'pitaka_root', 'book_root', 'depth',
-                'sibling_position', 'depth_position', 'global_position',
-                'prev_uid', 'next_uid'
+                'uid', 'parent_uid', 'type', 'pitaka_root', 'book_root', 
+                'pitaka_depth', 'book_depth', 'sibling_position', 'depth_position', 
+                'global_position', 'prev_uid', 'next_uid'
             )
             
-            data_dicts = []
-            for n in nodes:
-                data_dicts.append({key: n.get(key) for key in column_order})
+            data_dicts = [{key: n.get(key) for key in column_order} for n in nodes]
 
             cursor = self.conn.cursor()
             cursor.executemany(sql, data_dicts)

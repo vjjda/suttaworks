@@ -91,31 +91,32 @@ class HierarchyProcessor:
         return self.nodes
 
     def _process_file(self, file_path: Path):
-        """Đọc file và bắt đầu đệ quy với depth = 0 và position = 0."""
+        """Đọc file và bắt đầu đệ quy với các giá trị depth ban đầu."""
         logger.debug(f"Đang xử lý file: {file_path.name}")
         with open(file_path, 'r', encoding='utf-8') as f: data = json.load(f)
+        
         is_super_tree = 'super-tree' in file_path.name
         if is_super_tree:
-            # Bắt đầu với position = 0
-            self._recursive_parse(data, parent_uid=None, pitaka_root=None, book_root='buddha', depth=0, position=0)
+            # Bắt đầu với pitaka_depth=0 và book_depth=-1 (không áp dụng)
+            self._recursive_parse(data, None, None, 'buddha', pitaka_depth=0, book_depth=-1, position=0)
         else:
             if isinstance(data, dict) and len(data) == 1:
                 book_root = list(data.keys())[0]
                 parent_uid = self.book_parents.get(book_root)
                 pitaka_root = self.pitaka_map.get(book_root)
-                # Lấy position của node cha
                 parent_node = self.node_lookup.get(parent_uid, {})
-                parent_depth = parent_node.get('depth', -1)
-                # Bắt đầu với position = 0
-                self._recursive_parse(data, parent_uid, pitaka_root, book_root, depth=parent_depth + 1, position=0)
+                parent_pitaka_depth = parent_node.get('pitaka_depth', -1)
+                
+                # Bắt đầu với book_depth=0
+                self._recursive_parse(data, parent_uid, pitaka_root, book_root, pitaka_depth=parent_pitaka_depth + 1, book_depth=0, position=0)
             else:
                 logger.warning(f"Bỏ qua file {file_path.name} vì cấu trúc không hợp lệ.")
 
-    def _recursive_parse(self, data: Any, parent_uid: str | None, pitaka_root: str | None, book_root: str | None, depth: int, position: int):
-        """Hàm đệ quy, sử dụng 'position' làm 'sibling_position'."""
+    def _recursive_parse(self, data: Any, parent_uid: str | None, pitaka_root: str | None, book_root: str | None, pitaka_depth: int, book_depth: int, position: int):
+        """Hàm đệ quy, truyền và tăng dần cả pitaka_depth và book_depth."""
         if isinstance(data, list):
             for i, item in enumerate(data):
-                self._recursive_parse(item, parent_uid, pitaka_root, book_root, depth, position=i)
+                self._recursive_parse(item, parent_uid, pitaka_root, book_root, pitaka_depth, book_depth, position=i)
         
         elif isinstance(data, dict):
             if len(data) == 1:
@@ -125,28 +126,38 @@ class HierarchyProcessor:
                 node_pitaka_root = pitaka_root or self.pitaka_map.get(key)
                 node = {
                     "uid": key, "parent_uid": parent_uid,
-                    "sibling_position": position, # <-- THAY ĐỔI: Đổi tên key
                     "pitaka_root": node_pitaka_root, "book_root": book_root,
-                    "type": 'branch' if value else 'leaf', "depth": depth
+                    "type": 'branch' if value else 'leaf',
+                    "pitaka_depth": pitaka_depth,
+                    "book_depth": book_depth,
+                    "sibling_position": position,
                 }
                 if parent_uid is None: node['type'] = 'root'
                 
                 self.nodes.append(node)
                 self.node_lookup[key] = node
-                self._recursive_parse(value, key, node_pitaka_root, book_root, depth + 1, position=0)
+                
+                # Khi đệ quy xuống con, tăng cả 2 loại depth
+                # Nếu book_depth là -1, nó sẽ tiếp tục là -1
+                new_book_depth = book_depth + 1 if book_depth != -1 else -1
+                self._recursive_parse(value, key, node_pitaka_root, book_root, pitaka_depth + 1, new_book_depth, position=0)
 
         elif isinstance(data, str):
             node = {
                 "uid": data, "parent_uid": parent_uid,
-                "sibling_position": position, # <-- THAY ĐỔI: Đổi tên key
                 "pitaka_root": pitaka_root, "book_root": book_root,
-                "type": 'leaf', "depth": depth
+                "type": 'leaf',
+                "pitaka_depth": pitaka_depth,
+                "book_depth": book_depth,
+                "sibling_position": position,
             }
             self.nodes.append(node)
             self.node_lookup[data] = node
 
     def _link_nodes_within_books(self):
-        """Nhóm node theo book_root và depth, sau đó tạo liên kết và tính depth_position."""
+        """
+        Nhóm node theo book_root và pitaka_depth, sau đó tạo liên kết và tính depth_position.
+        """
         logger.info("Đang liên kết các node và tính depth_position...")
         
         nodes_by_book = defaultdict(list)
@@ -155,13 +166,19 @@ class HierarchyProcessor:
             nodes_by_book[book_root_key].append(node)
 
         for book_root, nodes_in_book in nodes_by_book.items():
+            logger.debug(f"Đang xử lý các node trong book_root: '{book_root}'")
+            
             nodes_by_depth_in_book = defaultdict(list)
             for node in nodes_in_book:
-                nodes_by_depth_in_book[node['depth']].append(node)
+                # --- THAY ĐỔI DUY NHẤT Ở ĐÂY ---
+                # Code cũ: nodes_by_depth_in_book[node['depth']].append(node)
+                # Code mới:
+                nodes_by_depth_in_book[node['pitaka_depth']].append(node)
 
-            for depth, nodes_in_depth in nodes_by_depth_in_book.items():
+            # (Tôi cũng đổi tên biến 'depth' thành 'pitaka_depth' cho rõ ràng)
+            for pitaka_depth, nodes_in_depth in nodes_by_depth_in_book.items():
+                logger.debug(f"  -> Đang liên kết {len(nodes_in_depth)} node ở pitaka_depth {pitaka_depth}...")
                 for i, node in enumerate(nodes_in_depth):
-                    # --- THAY ĐỔI: Gán giá trị cho depth_position và prev/next_uid ---
                     node['depth_position'] = i
                     node['prev_uid'] = nodes_in_depth[i-1]['uid'] if i > 0 else None
                     node['next_uid'] = nodes_in_depth[i+1]['uid'] if i < len(nodes_in_depth) - 1 else None
