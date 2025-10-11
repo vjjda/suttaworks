@@ -89,3 +89,39 @@ ORDER BY
     depth_position ASC
 LIMIT 50;
 ```
+
+### Get all Descendants of an uid
+
+```sql
+WITH RECURSIVE
+  -- Thêm global_position vào danh sách cột của bảng tạm
+  descendants(uid, parent_uid, pitaka_depth, global_position) AS (
+
+    -- Phần khởi đầu: Lấy CẢ global_position của node gốc
+    SELECT
+      uid,
+      parent_uid,
+      pitaka_depth,
+      global_position
+    FROM Hierarchy
+    WHERE uid = :start_uid
+
+    UNION ALL
+
+    -- Phần đệ quy: Lấy CẢ global_position của các node con
+    SELECT
+      h.uid,
+      h.parent_uid,
+      h.pitaka_depth,
+      h.global_position
+    FROM Hierarchy h
+    JOIN descendants d ON h.parent_uid = d.uid
+  )
+-- Bây giờ có thể truy cập và sắp xếp theo global_position
+SELECT
+  uid,
+  pitaka_depth
+FROM descendants
+WHERE uid != :start_uid
+ORDER BY global_position ASC;
+```
