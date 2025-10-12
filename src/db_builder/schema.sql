@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "Suttaplex" (
 );
 
 -- Bảng References: Lưu các thông tin tham chiếu, thư mục học
-CREATE TABLE IF NOT EXISTS "References" (
+CREATE TABLE IF NOT EXISTS "Sutta_References" (
     "uid" TEXT PRIMARY KEY,
     "volpages" TEXT,
     "alt_volpages" TEXT,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS "References" (
 
 -- Bảng Bibliography: Chi tiết các mục trong thư mục học
 CREATE TABLE IF NOT EXISTS "Bibliography" (
-    "uid" TEXT PRIMARY KEY,
-    "name" TEXT,
-    "text" TEXT
+    "biblio_uid" TEXT PRIMARY KEY,
+    "author_year" TEXT, -- <-- Đổi tên từ 'name'
+    "full_citation" TEXT  -- <-- Đổi tên từ 'text'
 );
