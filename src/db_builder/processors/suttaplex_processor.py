@@ -18,7 +18,7 @@ class SuttaplexProcessor:
         self.suttaplex_dir = PROJECT_ROOT / suttaplex_config[0]['data']
         self.biblio_map = biblio_map
         self.suttaplex_data: List[Dict[str, Any]] = []
-        self.misc_data: List[Dict[str, Any]] = []
+        self.references_data: List[Dict[str, Any]] = [] # <-- Đổi tên từ misc_data
 
     def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Quét, đọc, và trích xuất dữ liệu suttaplex thành 2 danh sách."""
@@ -42,18 +42,12 @@ class SuttaplexProcessor:
                         continue
 
                     def clean_value(value):
-                        """
-                        Làm sạch khoảng trắng thừa và chuyển giá trị rỗng thành None.
-                        """
-                        # Chỉ xử lý nếu giá trị là một chuỗi
                         if isinstance(value, str):
                             stripped_value = value.strip()
-                            # Trả về None nếu sau khi strip, chuỗi trở nên rỗng
                             return stripped_value if stripped_value else None
-                        # Trả về giá trị gốc nếu không phải chuỗi (ví dụ: số, None)
                         return value
-
-                    # Dữ liệu cho bảng Suttaplex
+                    
+                    # --- Xử lý bảng Suttaplex (giữ nguyên) ---
                     suttaplex = {
                         'uid': uid,
                         'root_lang': clean_value(suttaplex_card.get('root_lang')),
@@ -64,26 +58,23 @@ class SuttaplexProcessor:
                     }
                     self.suttaplex_data.append(suttaplex)
 
-                    # Dữ liệu cho bảng Misc
-                    difficulty_obj = suttaplex_card.get('difficulty')
-                    
-                    # --- THAY ĐỔI: Tra cứu biblio_uid ---
+                    # Dữ liệu cho bảng References (đã bỏ difficulty)
                     biblio_text = clean_value(suttaplex_card.get('biblio'))
-                    biblio_uid = self.biblio_map.get(biblio_text) if biblio_text else None
                     
-                    misc = {
+                    reference_entry = {
                         'uid': uid,
                         'volpages': clean_value(suttaplex_card.get('volpages')),
                         'alt_volpages': clean_value(suttaplex_card.get('alt_volpages')),
-                        'parallel_count': suttaplex_card.get('parallel_count'),
-                        'biblio_uid': biblio_uid, # <-- Sử dụng uid đã tra cứu
+                        'biblio_uid': self.biblio_map.get(biblio_text) if biblio_text else None,
                         'verseNo': clean_value(suttaplex_card.get('verseNo')),
-                        'difficulty': difficulty_obj.get('level') if difficulty_obj else None,
                     }
-                    self.misc_data.append(misc)
+
+                    has_useful_data = any(value is not None for key, value in reference_entry.items() if key != 'uid')
+                    if has_useful_data:
+                        self.references_data.append(reference_entry)
 
             except Exception as e:
                 logger.error(f"Lỗi khi xử lý file {file_path.name}: {e}", exc_info=True)
         
-        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex và {len(self.misc_data)} Misc records.")
-        return self.suttaplex_data, self.misc_data
+        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex và {len(self.references_data)} Reference records.")
+        return self.suttaplex_data, self.references_data

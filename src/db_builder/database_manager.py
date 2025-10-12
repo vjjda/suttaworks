@@ -62,6 +62,16 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logger.error(f"Lỗi khi thực thi SQL: {sql}\n{e}")
             raise
+    # Helper method để tránh lặp code
+    def _execute_many(self, sql: str, data: List[Dict[str, Any]], table_name: str):
+        try:
+            cursor = self.conn.cursor()
+            cursor.executemany(sql, data)
+            self.conn.commit()
+            logger.info(f"✅ Đã chèn thành công {cursor.rowcount} hàng vào {table_name}.")
+        except sqlite3.Error as e:
+            logger.error(f"Lỗi khi chèn hàng loạt vào {table_name}: {e}")
+            raise
 
     def create_table(self, create_table_sql: str):
         """Tạo một bảng từ một chuỗi SQL."""
@@ -163,21 +173,6 @@ class DatabaseManager:
         """
         self.create_table(sql)
 
-    def create_misc_table(self):
-        """Tạo bảng Misc để chứa các thông tin phụ."""
-        sql = """
-        CREATE TABLE IF NOT EXISTS Misc (
-            uid TEXT PRIMARY KEY,
-            volpages TEXT,
-            alt_volpages TEXT,
-            parallel_count INTEGER,
-            biblio_uid TEXT,
-            verseNo TEXT,
-            difficulty INTEGER,
-            FOREIGN KEY (uid) REFERENCES Hierarchy (uid)
-        );
-        """
-        self.create_table(sql)
 
     def insert_suttaplex_data(self, suttaplex_data: List[Dict[str, Any]]):
         """Chèn dữ liệu vào bảng Suttaplex."""
@@ -188,24 +183,28 @@ class DatabaseManager:
         VALUES (:uid, :root_lang, :acronym, :translated_title, :original_title, :blurb);
         """
         self._execute_many(sql, suttaplex_data, "Suttaplex")
-
-    def insert_misc_data(self, misc_data: List[Dict[str, Any]]):
-        """Chèn dữ liệu vào bảng Misc."""
-        if not misc_data: return
-        logger.info(f"Chuẩn bị chèn {len(misc_data)} hàng vào bảng Misc...")
+        
+    def create_references_table(self):
+        """Tạo bảng References."""
         sql = """
-        INSERT OR REPLACE INTO Misc (uid, volpages, alt_volpages, parallel_count, biblio_uid, verseNo, difficulty)
-        VALUES (:uid, :volpages, :alt_volpages, :parallel_count, :biblio_uid, :verseNo, :difficulty);
+        CREATE TABLE IF NOT EXISTS "References" (
+            uid TEXT PRIMARY KEY,
+            volpages TEXT,
+            alt_volpages TEXT,
+            biblio_uid TEXT,
+            verseNo TEXT,
+            FOREIGN KEY (uid) REFERENCES Hierarchy (uid)
+        );
         """
-        self._execute_many(sql, misc_data, "Misc")
+        self.create_table(sql)
 
-    # Helper method để tránh lặp code
-    def _execute_many(self, sql: str, data: List[Dict[str, Any]], table_name: str):
-        try:
-            cursor = self.conn.cursor()
-            cursor.executemany(sql, data)
-            self.conn.commit()
-            logger.info(f"✅ Đã chèn thành công {cursor.rowcount} hàng vào {table_name}.")
-        except sqlite3.Error as e:
-            logger.error(f"Lỗi khi chèn hàng loạt vào {table_name}: {e}")
-            raise
+    # Đổi tên từ insert_misc_data -> insert_references_data
+    def insert_references_data(self, references_data: List[Dict[str, Any]]):
+        """Chèn dữ liệu vào bảng References."""
+        if not references_data: return
+        logger.info(f"Chuẩn bị chèn {len(references_data)} hàng vào bảng References...")
+        sql = """
+        INSERT OR REPLACE INTO "References" (uid, volpages, alt_volpages, biblio_uid, verseNo)
+        VALUES (:uid, :volpages, :alt_volpages, :biblio_uid, :verseNo);
+        """
+        self._execute_many(sql, references_data, "References")

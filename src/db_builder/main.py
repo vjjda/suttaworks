@@ -67,18 +67,18 @@ def main():
                 db_manager.insert_bibliography_data(biblio_data)
             # ----------------------------------------
 
-            # --- Xử lý Suttaplex & Misc ---
-            logger.info("--- Bắt đầu xử lý Suttaplex & Misc ---")
+            # --- CẬP NHẬT LOGIC XỬ LÝ SUTTAPLEX VÀ REFERENCES ---
+            logger.info("--- Bắt đầu xử lý Suttaplex & References ---")
             db_manager.create_suttaplex_table()
-            db_manager.create_misc_table()
-            # --- THAY ĐỔI: Truyền biblio_map vào processor ---
+            db_manager.create_references_table() # <-- Đổi tên hàm
+
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, misc_data = s_processor.process()
+            suttaplex_data, references_data = s_processor.process() # <-- Đổi tên biến
 
             if suttaplex_data:
                 db_manager.insert_suttaplex_data(suttaplex_data)
-            if misc_data:
-                db_manager.insert_misc_data(misc_data)
+            if references_data:
+                db_manager.insert_references_data(references_data) # <-- Đổi tên hàm
             # ------------------------------------
 
     except Exception as e:
