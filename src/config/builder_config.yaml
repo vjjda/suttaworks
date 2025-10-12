@@ -3,6 +3,8 @@
 suttacentral-sqlite:
   path: "data/processed"
   name: suttacentral.sqlite
+  # Hierarchy
+  bibliography: "data/raw/git/suttacentral-data/additional-info/biblio.json"
   tree: 
     - super-tree: "data/raw/git/suttacentral-data/structure/tree/super-tree.json"
     - sutta: "data/raw/git/suttacentral-data/structure/tree/sutta"
@@ -10,5 +12,7 @@ suttacentral-sqlite:
     - abhidhamma: "data/raw/git/suttacentral-data/structure/tree/abhidhamma"
     - ignore:
         - upp-tree.json
-  sutta: "to be done"
-  translations: "to be done"
+  suttaplex: 
+    - data: "data/raw/suttaplex"
+    - blurb: "data/raw/git/suttacentral-data/sc_bilara_data/root/en/blurb"
+  bilara: "to be done"
