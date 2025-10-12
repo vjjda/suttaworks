@@ -1,22 +1,30 @@
 # Path: /src/db_updater/main.py
 import argparse
-from pathlib import Path
 import sys
 import logging
+from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-sys.path.append(str(PROJECT_ROOT))
+# --- THAY ĐỔI 1: Import constants ---
+# Thay vì tự định nghĩa, ta import các đường dẫn dùng chung từ constants.py
+from src.config import constants
+
+# Thêm PROJECT_ROOT vào sys.path để Python có thể tìm thấy các module trong `src`
+# Điều này cần thiết để dòng `from src.config...` ở trên hoạt động
+# Lưu ý: Cách làm này phổ biến nhưng có thể có cách khác tốt hơn (ví dụ: cài đặt dự án ở chế độ editable).
+# Tạm thời ta vẫn giữ để đảm bảo script chạy được từ bất kỳ đâu.
+sys.path.append(str(constants.PROJECT_ROOT))
 
 from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
-# --- THAY ĐỔI 1: Import handler mới ---
 from src.db_updater.handlers import api_handler, gdrive_handler, git_handler, git_release_handler
 
 setup_logging()
 log = logging.getLogger(__name__)
 
-CONFIG_PATH = PROJECT_ROOT / "src/config/updater_config.yaml"
-RAW_DATA_PATH = PROJECT_ROOT / "data/raw"
+# --- THAY ĐỔI 2: Sử dụng hằng số đã import ---
+# Xây dựng đường dẫn tới file config từ các hằng số
+CONFIG_PATH = constants.CONFIG_PATH / "updater_config.yaml"
+RAW_DATA_PATH = constants.RAW_DATA_PATH
 
 def main():
     parser = argparse.ArgumentParser(description="Công cụ dòng lệnh để cập nhật dữ liệu thô cho dự án.")
@@ -38,6 +46,7 @@ def main():
             return
 
         module_config = config[module_name]
+        # Sử dụng RAW_DATA_PATH đã import
         destination_dir = RAW_DATA_PATH / module_name
         
         if not isinstance(module_config, dict):
@@ -48,18 +57,17 @@ def main():
         handler_config = module_config[module_type]
         log.info(f"Bắt đầu cập nhật module '{module_name}' với handler '{module_type}'...")
         
-        # --- THAY ĐỔI 2: Thêm logic điều phối cho git-release ---
         if module_type == "api":
             api_handler.process_api_data(handler_config, destination_dir)
         elif module_type == "google-drive":
             gdrive_handler.process_gdrive_data(handler_config, destination_dir)
         elif module_type == "sub-submodule":
-            git_handler.process_git_submodules(handler_config, PROJECT_ROOT, destination_dir)
+            # Cần truyền PROJECT_ROOT vào function này
+            git_handler.process_git_submodules(handler_config, constants.PROJECT_ROOT, destination_dir)
         elif module_type == "git-release":
             git_release_handler.process_git_release_data(handler_config, destination_dir)
         else:
             log.warning(f"Chưa hỗ trợ loại handler '{module_type}'.")
-        # ---------------------------------------------------
 
         log.info("Hoàn tất!")
 

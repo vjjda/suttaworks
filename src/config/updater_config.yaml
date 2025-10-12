@@ -21,34 +21,13 @@ buddha-words:
     extract: "bw"
 suttaplex:
   api:
-    sutta-json:
-      - dn: https://suttacentral.net/api/suttaplex/dn
-      - mn: https://suttacentral.net/api/suttaplex/mn
-      - sn: https://suttacentral.net/api/suttaplex/sn
-      - an: https://suttacentral.net/api/suttaplex/an
-      - dhp: https://suttacentral.net/api/suttaplex/dhp
-      - iti: https://suttacentral.net/api/suttaplex/iti
-      - snp: https://suttacentral.net/api/suttaplex/snp
-      - thag: https://suttacentral.net/api/suttaplex/thag
-      - thig: https://suttacentral.net/api/suttaplex/thig
-      - ud: https://suttacentral.net/api/suttaplex/ud
-    kn-late-json:
-      - bv: https://suttacentral.net/api/suttaplex/bv
-      - cnd: https://suttacentral.net/api/suttaplex/cnd
-      - cp: https://suttacentral.net/api/suttaplex/cp
-      - ja: https://suttacentral.net/api/suttaplex/ja
-      - kp: https://suttacentral.net/api/suttaplex/kp
-      - mil: https://suttacentral.net/api/suttaplex/mil
-      - mnd: https://suttacentral.net/api/suttaplex/mnd
-      - ne: https://suttacentral.net/api/suttaplex/ne
-      - pe: https://suttacentral.net/api/suttaplex/pe
-      - ps: https://suttacentral.net/api/suttaplex/ps
-      - pv: https://suttacentral.net/api/suttaplex/pv
-      - tha-ap: https://suttacentral.net/api/suttaplex/tha-ap
-      - thi-ap: https://suttacentral.net/api/suttaplex/thi-ap
-      - vv: https://suttacentral.net/api/suttaplex/vv
-    vinaya-json:
-      - pli-tv-vi: https://suttacentral.net/api/suttaplex/pli-tv-vi
+    base_url: "https://suttacentral.net/api/suttaplex/"
+    # --- ĐÃ CẬP NHẬT SANG ĐỊNH DẠNG MỘT DÒNG ---
+    groups:
+      sutta: [sutta]
+      vinaya: [vinaya]
+      abhidhamma: [abhidhamma]
+      sutta-update: [sn]
 # dhammatalks:
 #   crawl:
 #     - bmc: https://www.dhammatalks.org/vinaya/bmc/Section0000.html
