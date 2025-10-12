@@ -61,15 +61,16 @@ def main():
             # --- Xử lý Bibliography ---
             logger.info("--- Bắt đầu xử lý Bibliography ---")
             b_processor = BiblioProcessor(db_config['bibliography'])
+            # --- THAY ĐỔI: Nhận cả data và map ---
             biblio_data, biblio_map = b_processor.process()
             db_manager.insert_data("Bibliography", biblio_data)
 
-            # --- Xử lý Suttaplex & References ---
-            logger.info("--- Bắt đầu xử lý Suttaplex & References ---")
+            # --- Xử lý Suttaplex & Sutta_References ---
+            logger.info("--- Bắt đầu xử lý Suttaplex & Sutta_References ---")
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, references_data = s_processor.process()
+            suttaplex_data, sutta_references_data = s_processor.process() # <-- Đổi tên biến
             db_manager.insert_data("Suttaplex", suttaplex_data)
-            db_manager.insert_data("References", references_data)
+            db_manager.insert_data("Sutta_References", sutta_references_data)
 
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)

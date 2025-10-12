@@ -18,12 +18,13 @@ class SuttaplexProcessor:
         self.suttaplex_dir = PROJECT_ROOT / suttaplex_config[0]['data']
         self.biblio_map = biblio_map
         self.suttaplex_data: List[Dict[str, Any]] = []
-        self.references_data: List[Dict[str, Any]] = [] # <-- Đổi tên từ misc_data
+        self.sutta_references_data: List[Dict[str, Any]] = [] # <-- Đổi tên
+
 
     def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Quét, đọc, và trích xuất dữ liệu suttaplex thành 2 danh sách."""
         logger.info(f"Bắt đầu quét dữ liệu suttaplex từ thư mục: {self.suttaplex_dir}")
-        
+
         json_files = list(self.suttaplex_dir.glob('**/*.json'))
         logger.info(f"Tìm thấy {len(json_files)} file JSON để xử lý.")
 
@@ -47,7 +48,7 @@ class SuttaplexProcessor:
                             return stripped_value if stripped_value else None
                         return value
                     
-                    # --- Xử lý bảng Suttaplex (giữ nguyên) ---
+                    # Dữ liệu cho bảng Suttaplex
                     suttaplex = {
                         'uid': uid,
                         'root_lang': clean_value(suttaplex_card.get('root_lang')),
@@ -58,7 +59,7 @@ class SuttaplexProcessor:
                     }
                     self.suttaplex_data.append(suttaplex)
 
-                    # Dữ liệu cho bảng References (đã bỏ difficulty)
+                    # Dữ liệu cho bảng Sutta_References
                     biblio_text = clean_value(suttaplex_card.get('biblio'))
                     
                     reference_entry = {
@@ -71,10 +72,12 @@ class SuttaplexProcessor:
 
                     has_useful_data = any(value is not None for key, value in reference_entry.items() if key != 'uid')
                     if has_useful_data:
-                        self.references_data.append(reference_entry)
+                        self.sutta_references_data.append(reference_entry)
 
+            # --- THÊM LẠI KHỐI EXCEPT BỊ THIẾU ---
             except Exception as e:
                 logger.error(f"Lỗi khi xử lý file {file_path.name}: {e}", exc_info=True)
+            # ------------------------------------
         
-        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex và {len(self.references_data)} Reference records.")
-        return self.suttaplex_data, self.references_data
+        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex và {len(self.sutta_references_data)} Sutta_References records.")
+        return self.suttaplex_data, self.sutta_references_data
