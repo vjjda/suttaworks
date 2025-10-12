@@ -11,6 +11,8 @@ from src.db_builder.config_loader import load_config
 from src.db_builder.database_manager import DatabaseManager
 from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
 from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
+from src.db_builder.processors.biblio_processor import BiblioProcessor # <-- IMPORT MỚI
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +56,23 @@ def main():
             nodes_data = h_processor.process_trees()
             if nodes_data:
                 db_manager.insert_hierarchy_nodes(nodes_data)
+                
+            # --- XỬ LÝ BIBLIOGRAPHY (TRƯỚC SUTTAPLEX) ---
+            logger.info("--- Bắt đầu xử lý Bibliography ---")
+            db_manager.create_bibliography_table()
+            b_processor = BiblioProcessor(db_config['bibliography'])
+            # --- THAY ĐỔI: Nhận cả data và map ---
+            biblio_data, biblio_map = b_processor.process()
+            if biblio_data:
+                db_manager.insert_bibliography_data(biblio_data)
+            # ----------------------------------------
 
+            # --- Xử lý Suttaplex & Misc ---
             logger.info("--- Bắt đầu xử lý Suttaplex & Misc ---")
             db_manager.create_suttaplex_table()
             db_manager.create_misc_table()
-
-            s_processor = SuttaplexProcessor(db_config['suttaplex'])
+            # --- THAY ĐỔI: Truyền biblio_map vào processor ---
+            s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
             suttaplex_data, misc_data = s_processor.process()
 
             if suttaplex_data:

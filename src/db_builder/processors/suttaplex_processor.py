@@ -11,11 +11,12 @@ from src.config.constants import PROJECT_ROOT
 logger = logging.getLogger(__name__)
 
 class SuttaplexProcessor:
-    """Xử lý dữ liệu suttaplex để điền vào các bảng Suttaplex và Misc."""
+    """Xử lý dữ liệu suttaplex để điền vào các bảng liên quan."""
 
-    def __init__(self, suttaplex_config: List[Dict[str, str]]):
+    # --- THAY ĐỔI: Nhận thêm biblio_map ---
+    def __init__(self, suttaplex_config: List[Dict[str, str]], biblio_map: Dict[str, str]):
         self.suttaplex_dir = PROJECT_ROOT / suttaplex_config[0]['data']
-        # --- Đảm bảo tên biến nhất quán: suttaplex_data (số ít) ---
+        self.biblio_map = biblio_map
         self.suttaplex_data: List[Dict[str, Any]] = []
         self.misc_data: List[Dict[str, Any]] = []
 
@@ -65,12 +66,17 @@ class SuttaplexProcessor:
 
                     # Dữ liệu cho bảng Misc
                     difficulty_obj = suttaplex_card.get('difficulty')
+                    
+                    # --- THAY ĐỔI: Tra cứu biblio_uid ---
+                    biblio_text = clean_value(suttaplex_card.get('biblio'))
+                    biblio_uid = self.biblio_map.get(biblio_text) if biblio_text else None
+                    
                     misc = {
                         'uid': uid,
                         'volpages': clean_value(suttaplex_card.get('volpages')),
                         'alt_volpages': clean_value(suttaplex_card.get('alt_volpages')),
                         'parallel_count': suttaplex_card.get('parallel_count'),
-                        'biblio_uid': clean_value(suttaplex_card.get('biblio')),
+                        'biblio_uid': biblio_uid, # <-- Sử dụng uid đã tra cứu
                         'verseNo': clean_value(suttaplex_card.get('verseNo')),
                         'difficulty': difficulty_obj.get('level') if difficulty_obj else None,
                     }

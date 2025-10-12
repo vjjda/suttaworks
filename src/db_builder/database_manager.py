@@ -68,6 +68,27 @@ class DatabaseManager:
         logger.info("Đang tiến hành tạo bảng...")
         self._execute_sql(create_table_sql)
         logger.info("Bảng đã được tạo hoặc đã tồn tại.")
+    
+    def create_bibliography_table(self):
+        """Tạo bảng Bibliography."""
+        sql = """
+        CREATE TABLE IF NOT EXISTS Bibliography (
+            uid TEXT PRIMARY KEY,
+            name TEXT,
+            text TEXT
+        );
+        """
+        self.create_table(sql)
+
+    def insert_bibliography_data(self, biblio_data: List[Dict[str, Any]]):
+        """Chèn dữ liệu vào bảng Bibliography."""
+        if not biblio_data: return
+        logger.info(f"Chuẩn bị chèn {len(biblio_data)} hàng vào bảng Bibliography...")
+        sql = """
+        INSERT OR REPLACE INTO Bibliography (uid, name, text)
+        VALUES (:uid, :name, :text);
+        """
+        self._execute_many(sql, biblio_data, "Bibliography")
         
     def create_hierarchy_table(self):
         """Tạo bảng Hierarchy với pitaka_depth và book_depth."""
