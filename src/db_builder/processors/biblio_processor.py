@@ -42,7 +42,7 @@ class BiblioProcessor:
                 
                 biblio_data.append({
                     'biblio_uid': uid, # Đổi 'uid' thành 'biblio_uid'
-                    'author_year': biblio_entry.get('name'),
+                    'citation_key': biblio_entry.get('name'),
                     'full_citation': text_content,
                 })
 

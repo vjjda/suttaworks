@@ -40,6 +40,6 @@ CREATE TABLE IF NOT EXISTS "Sutta_References" (
 -- Bảng Bibliography: Chi tiết các mục trong thư mục học
 CREATE TABLE IF NOT EXISTS "Bibliography" (
     "biblio_uid" TEXT PRIMARY KEY,
-    "author_year" TEXT, -- <-- Đổi tên từ 'name'
+    "citation_key" TEXT, -- <-- Đổi tên từ 'name'
     "full_citation" TEXT  -- <-- Đổi tên từ 'text'
 );
