@@ -49,37 +49,27 @@ def main():
         logger.info(f"Database sẽ được tạo tại: {db_path}")
 
         with DatabaseManager(db_path) as db_manager:
-            # Xử lý Hierarchy
+            # --- TẠO TẤT CẢ BẢNG CÙNG LÚC ---
+            db_manager.create_tables_from_schema()
+
+            # --- Xử lý Hierarchy ---
             logger.info("--- Bắt đầu xử lý Hierarchy ---")
-            db_manager.create_hierarchy_table()
             h_processor = HierarchyProcessor(db_config['tree'])
             nodes_data = h_processor.process_trees()
-            if nodes_data:
-                db_manager.insert_hierarchy_nodes(nodes_data)
-                
-            # --- XỬ LÝ BIBLIOGRAPHY (TRƯỚC SUTTAPLEX) ---
+            db_manager.insert_data("Hierarchy", nodes_data)
+
+            # --- Xử lý Bibliography ---
             logger.info("--- Bắt đầu xử lý Bibliography ---")
-            db_manager.create_bibliography_table()
             b_processor = BiblioProcessor(db_config['bibliography'])
-            # --- THAY ĐỔI: Nhận cả data và map ---
             biblio_data, biblio_map = b_processor.process()
-            if biblio_data:
-                db_manager.insert_bibliography_data(biblio_data)
-            # ----------------------------------------
+            db_manager.insert_data("Bibliography", biblio_data)
 
-            # --- CẬP NHẬT LOGIC XỬ LÝ SUTTAPLEX VÀ REFERENCES ---
+            # --- Xử lý Suttaplex & References ---
             logger.info("--- Bắt đầu xử lý Suttaplex & References ---")
-            db_manager.create_suttaplex_table()
-            db_manager.create_references_table() # <-- Đổi tên hàm
-
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, references_data = s_processor.process() # <-- Đổi tên biến
-
-            if suttaplex_data:
-                db_manager.insert_suttaplex_data(suttaplex_data)
-            if references_data:
-                db_manager.insert_references_data(references_data) # <-- Đổi tên hàm
-            # ------------------------------------
+            suttaplex_data, references_data = s_processor.process()
+            db_manager.insert_data("Suttaplex", suttaplex_data)
+            db_manager.insert_data("References", references_data)
 
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
