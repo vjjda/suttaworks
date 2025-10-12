@@ -186,25 +186,26 @@ class DatabaseManager:
         
     def create_references_table(self):
         """Tạo bảng References."""
+        # --- THAY ĐỔI: Chuyển biblio_uid xuống cuối ---
         sql = """
         CREATE TABLE IF NOT EXISTS "References" (
             uid TEXT PRIMARY KEY,
             volpages TEXT,
             alt_volpages TEXT,
-            biblio_uid TEXT,
             verseNo TEXT,
+            biblio_uid TEXT,
             FOREIGN KEY (uid) REFERENCES Hierarchy (uid)
         );
         """
         self.create_table(sql)
 
-    # Đổi tên từ insert_misc_data -> insert_references_data
     def insert_references_data(self, references_data: List[Dict[str, Any]]):
         """Chèn dữ liệu vào bảng References."""
         if not references_data: return
         logger.info(f"Chuẩn bị chèn {len(references_data)} hàng vào bảng References...")
+        # --- THAY ĐỔI: Chuyển biblio_uid xuống cuối ---
         sql = """
-        INSERT OR REPLACE INTO "References" (uid, volpages, alt_volpages, biblio_uid, verseNo)
-        VALUES (:uid, :volpages, :alt_volpages, :biblio_uid, :verseNo);
+        INSERT OR REPLACE INTO "References" (uid, volpages, alt_volpages, verseNo, biblio_uid)
+        VALUES (:uid, :volpages, :alt_volpages, :verseNo, :biblio_uid);
         """
         self._execute_many(sql, references_data, "References")
