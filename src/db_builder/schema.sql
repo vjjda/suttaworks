@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS "Sutta_References" (
     "alt_volpages" TEXT,
     "verseNo" TEXT,
     "biblio_uid" TEXT,
-    FOREIGN KEY ("uid") REFERENCES "Hierarchy" ("uid")
+    FOREIGN KEY ("uid") REFERENCES "Hierarchy" ("uid"),
+    FOREIGN KEY ("biblio_uid") REFERENCES "Bibliography" ("biblio_uid")
 );
 
 -- Bảng Bibliography: Chi tiết các mục trong thư mục học

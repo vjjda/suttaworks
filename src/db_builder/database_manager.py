@@ -78,3 +78,15 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logger.error(f"Lỗi khi chèn hàng loạt vào '{table_name}': {e}")
             raise
+    
+    def connect(self):
+        """Thiết lập kết nối đến database và bật kiểm tra khóa ngoại."""
+        try:
+            logger.info(f"Đang kết nối đến database: {self.db_path}")
+            self.conn = sqlite3.connect(self.db_path)
+            # --- THÊM DÒNG NÀY ĐỂ BẬT TÍNH NĂNG ---
+            self.conn.execute("PRAGMA foreign_keys = ON;")
+            logger.info("✅ Kết nối database thành công (đã bật foreign keys).")
+        except sqlite3.Error as e:
+            logger.error(f"Lỗi khi kết nối đến database: {e}")
+            raise
