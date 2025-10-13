@@ -40,8 +40,10 @@ class DatabaseManager:
             logger.info("Đã đóng kết nối database.")
 
     def create_tables_from_schema(self):
-        """Đọc file schema.sql và thực thi để tạo tất cả các bảng."""
-        schema_path = PROJECT_ROOT / "src" / "db_builder" / "schema.sql"
+        """Đọc file schema và thực thi để tạo tất cả các bảng."""
+        # --- THAY ĐỔI TÊN FILE Ở ĐÂY ---
+        schema_path = PROJECT_ROOT / "src" / "db_builder" / "suttacentral_schema.sql"
+        
         logger.info(f"Đang đọc schema từ: {schema_path}")
         try:
             with open(schema_path, 'r', encoding='utf-8') as f:

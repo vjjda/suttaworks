@@ -1,4 +1,4 @@
--- Path: src/db_builder/schema.sql
+-- Path: src/db_builder/suttacentral_schema.sql
 
 -- Bảng Suttaplex: Lưu siêu dữ liệu chính, giờ là bảng "trung tâm"
 CREATE TABLE IF NOT EXISTS "Suttaplex" (
