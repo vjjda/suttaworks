@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 class HierarchyProcessor:
     """Xử lý các file JSON tree, lọc và tạo dữ liệu cho bảng Hierarchy."""
 
-    # --- THAY ĐỔI: Cập nhật __init__ để nhận valid_uids ---
-    def __init__(self, tree_config: List[Dict[str, Any]], valid_uids: set):
+    # --- THAY ĐỔI: Cập nhật __init__ để nhận uid_to_type_map ---
+    def __init__(self, tree_config: List[Dict[str, Any]], valid_uids: set, uid_to_type_map: Dict[str, str]):
         self.tree_config = tree_config
         self.valid_uids = valid_uids
+        self.uid_to_type_map = uid_to_type_map
         self.nodes: List[Dict[str, Any]] = []
         self.node_lookup: Dict[str, Dict[str, Any]] = {}
         self.book_parents: Dict[str, str] = {}
@@ -79,10 +80,51 @@ class HierarchyProcessor:
             self._process_file(file_path)
 
         # Bước 3: Lọc các node không hợp lệ
-        logger.info(f"Tổng số node ban đầu: {len(self.nodes)}. Bắt đầu lọc các node không có trong Suttaplex...")
+        # --- Bước lọc "dead leaves" ---
+        logger.info(f"Tổng số node ban đầu: {len(self.nodes)}. Bắt đầu lọc 'dead leaves'...")
         filtered_nodes = [node for node in self.nodes if node['uid'] in self.valid_uids]
-        logger.info(f"Tổng số node sau khi lọc: {len(filtered_nodes)}.")
+        logger.info(f"Tổng số node sau khi lọc dead leaves: {len(filtered_nodes)}.")
         self.nodes = filtered_nodes
+        
+        # --- BƯỚC MỚI: Hiệu đính các "sách rỗng" ---
+        logger.info("Hiệu đính các nhánh trở thành lá (sách rỗng)...")
+        current_parents = {node['parent_uid'] for node in self.nodes if node.get('parent_uid')}
+        for node in self.nodes:
+            # Nếu một node là 'branch' nhưng không phải là cha của bất kỳ node nào khác
+            if node['type'] == 'branch' and node['uid'] not in current_parents:
+                logger.warning(
+                    f"Node '{node['uid']}' là một nhánh rỗng. "
+                    f"Chuyển type thành 'leaf' và book_root thành chính nó."
+                )
+                node['type'] = 'leaf'
+                node['book_root'] = node['uid']
+        # --- KẾT THÚC BƯỚC MỚI ---
+
+        # --- BƯỚC MỚI: Tỉa cành rỗng (Pruning Empty Branches) ---
+        logger.info("Bắt đầu tỉa các nhánh rỗng...")
+        while True:
+            node_count_before_pruning = len(self.nodes)
+            
+            # Tạo một set chứa tất cả các parent_uid còn tồn tại
+            current_parents = {node['parent_uid'] for node in self.nodes if node.get('parent_uid')}
+            
+            # Giữ lại các node là leaf, root, hoặc là branch nhưng có con
+            nodes_after_pruning = [
+                node for node in self.nodes 
+                if node['type'] != 'branch' or node['uid'] in current_parents
+            ]
+            
+            self.nodes = nodes_after_pruning
+            node_count_after_pruning = len(self.nodes)
+            
+            # Nếu không có node nào bị xóa trong vòng lặp này, quá trình tỉa cành hoàn tất
+            if node_count_before_pruning == node_count_after_pruning:
+                break
+            else:
+                logger.info(f"Đã tỉa {node_count_before_pruning - node_count_after_pruning} nhánh rỗng...")
+        
+        logger.info(f"Tổng số node cuối cùng sau khi tỉa cành: {len(self.nodes)}.")
+        # --- KẾT THÚC BƯỚC TỈA CÀNH ---
         
         # Bước 4: Tính toán các loại position
         logger.info("Tính toán global_position cho các node...")
@@ -116,7 +158,7 @@ class HierarchyProcessor:
                 logger.warning(f"Bỏ qua file {file_path.name} vì cấu trúc không hợp lệ.")
 
     def _recursive_parse(self, data: Any, parent_uid: str | None, pitaka_root: str | None, book_root: str | None, pitaka_depth: int, book_depth: int, position: int):
-        """Hàm đệ quy, truyền và tăng dần cả pitaka_depth và book_depth."""
+        """Hàm đệ quy, lấy type từ map thay vì suy luận."""
         if isinstance(data, list):
             for i, item in enumerate(data):
                 self._recursive_parse(item, parent_uid, pitaka_root, book_root, pitaka_depth, book_depth, position=i)
@@ -126,30 +168,36 @@ class HierarchyProcessor:
                 key = list(data.keys())[0]
                 value = data[key]
                 
-                node_pitaka_root = pitaka_root or self.pitaka_map.get(key)
+                # --- THAY ĐỔI: Lấy type từ map ---
+                node_type = self.uid_to_type_map.get(key)
+                if not node_type:
+                    node_type = 'branch' if value else 'leaf'
+                    if parent_uid is None: node_type = 'root'
+                
                 node = {
                     "uid": key, "parent_uid": parent_uid,
-                    "pitaka_root": node_pitaka_root, "book_root": book_root,
-                    "type": 'branch' if value else 'leaf',
+                    "pitaka_root": pitaka_root or self.pitaka_map.get(key),
+                    "book_root": book_root,
+                    "type": node_type,
                     "pitaka_depth": pitaka_depth,
                     "book_depth": book_depth,
                     "sibling_position": position,
                 }
-                if parent_uid is None: node['type'] = 'root'
                 
                 self.nodes.append(node)
                 self.node_lookup[key] = node
                 
-                # Khi đệ quy xuống con, tăng cả 2 loại depth
-                # Nếu book_depth là -1, nó sẽ tiếp tục là -1
                 new_book_depth = book_depth + 1 if book_depth != -1 else -1
-                self._recursive_parse(value, key, node_pitaka_root, book_root, pitaka_depth + 1, new_book_depth, position=0)
+                self._recursive_parse(value, key, pitaka_root or self.pitaka_map.get(key), book_root, pitaka_depth + 1, new_book_depth, position=0)
 
         elif isinstance(data, str):
+            # --- THAY ĐỔI: Lấy type từ map ---
+            node_type = self.uid_to_type_map.get(data, 'leaf')
+
             node = {
                 "uid": data, "parent_uid": parent_uid,
                 "pitaka_root": pitaka_root, "book_root": book_root,
-                "type": 'leaf',
+                "type": node_type,
                 "pitaka_depth": pitaka_depth,
                 "book_depth": book_depth,
                 "sibling_position": position,

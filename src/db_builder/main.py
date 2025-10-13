@@ -57,20 +57,20 @@ def main():
             biblio_data, biblio_map = b_processor.process()
             db_manager.insert_data("Bibliography", biblio_data)
 
-            # --- Bước 2: Xử lý Suttaplex để lấy "danh sách vàng" ---
+            # --- Bước 2: Suttaplex, nhận thêm uid_to_type_map ---
             logger.info("--- Bắt đầu xử lý Suttaplex & Sutta_References ---")
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, sutta_references_data, valid_uids = s_processor.process()
+            suttaplex_data, sutta_references_data, valid_uids, uid_to_type_map = s_processor.process()
 
-            # --- Ghi Suttaplex TRƯỚC ---
-            db_manager.insert_data("Suttaplex", suttaplex_data)
-            db_manager.insert_data("Sutta_References", sutta_references_data)
-            
-            # --- Sau đó mới xử lý và ghi Hierarchy ---
+            # --- Bước 3: Hierarchy, truyền uid_to_type_map vào ---
             logger.info("--- Bắt đầu xử lý Hierarchy ---")
-            h_processor = HierarchyProcessor(db_config['tree'], valid_uids)
+            h_processor = HierarchyProcessor(db_config['tree'], valid_uids, uid_to_type_map)
             nodes_data = h_processor.process_trees()
+            
+            # --- Bước 4: Ghi vào DB (thứ tự rất quan trọng) ---
+            db_manager.insert_data("Suttaplex", suttaplex_data)
             db_manager.insert_data("Hierarchy", nodes_data)
+            db_manager.insert_data("Sutta_References", sutta_references_data)
             
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)

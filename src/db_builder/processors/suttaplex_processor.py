@@ -20,9 +20,10 @@ class SuttaplexProcessor:
         self.sutta_references_data: List[Dict[str, Any]] = []
 
 
-    def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], set]:
-        """Quét, đọc, trích xuất dữ liệu và trả về một set các UID hợp lệ."""
-        valid_uids = set() # <-- TẠO SET MỚI
+    def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], set, Dict[str, str]]:
+        """Quét, đọc, trích xuất dữ liệu và trả về cả một set UID và một map uid -> type."""
+        valid_uids = set()
+        uid_to_type_map = {} # <-- TẠO MAP MỚI
         logger.info(f"Bắt đầu quét dữ liệu suttaplex từ thư mục: {self.suttaplex_dir}")
 
         json_files = list(self.suttaplex_dir.glob('**/*.json'))
@@ -42,6 +43,7 @@ class SuttaplexProcessor:
                         logger.warning(f"Bỏ qua suttaplex card tại index {index} trong file '{file_path.name}' vì thiếu 'uid'.")
                         continue
                     valid_uids.add(uid)
+                    uid_to_type_map[uid] = suttaplex_card.get('type') # <-- ĐIỀN DỮ LIỆU VÀO MAP
 
                     def clean_value(value):
                         if isinstance(value, str):
@@ -81,4 +83,4 @@ class SuttaplexProcessor:
             # ------------------------------------
         
         logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex, {len(self.sutta_references_data)} Sutta_References, và tìm thấy {len(valid_uids)} UID hợp lệ.")
-        return self.suttaplex_data, self.sutta_references_data, valid_uids
+        return self.suttaplex_data, self.sutta_references_data, valid_uids, uid_to_type_map
