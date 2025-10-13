@@ -1,31 +1,26 @@
 # Path: src/db_builder/processors/hierarchy_processor.py
-#!/usr/bin/env python3
-
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from collections import defaultdict
-
-# --- THAY ĐỔI DUY NHẤT: Import PROJECT_ROOT ---
 from src.config.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
 class HierarchyProcessor:
-    """Xử lý các file JSON tree để xây dựng dữ liệu cho bảng Hierarchy."""
-    CANONICAL_PARENTS = {
-        'dhp': 'kn'
-        # Thêm các quy tắc khác ở đây nếu cần trong tương lai
-    }
-    
-    def __init__(self, tree_config: List[Dict[str, Any]]):
+    """Xử lý các file JSON tree, lọc và tạo dữ liệu cho bảng Hierarchy."""
+
+    # --- THAY ĐỔI: Cập nhật __init__ để nhận valid_uids ---
+    def __init__(self, tree_config: List[Dict[str, Any]], valid_uids: set):
         self.tree_config = tree_config
+        self.valid_uids = valid_uids
         self.nodes: List[Dict[str, Any]] = []
         self.node_lookup: Dict[str, Dict[str, Any]] = {}
         self.book_parents: Dict[str, str] = {}
         self.pitaka_map: Dict[str, str] = {}
         self.ignore_list = set()
+        self.CANONICAL_PARENTS = {'dhp': 'kn'}
         for entry in self.tree_config:
             if 'ignore' in entry and isinstance(entry['ignore'], list):
                 self.ignore_list.update(entry['ignore'])
@@ -58,23 +53,24 @@ class HierarchyProcessor:
             self.book_parents[child] = parent
             
     def process_trees(self) -> List[Dict[str, Any]]:
-        """Bắt đầu quá trình xử lý."""
-        # --- Bước 1: "Học" từ super-tree.json ---
-        relative_super_tree_path = self.tree_config[0]['super-tree']
-        super_tree_path = PROJECT_ROOT / relative_super_tree_path
+        """Bắt đầu quá trình xử lý, bao gồm lọc, tính toán và liên kết."""
+        logger.info("Bắt đầu xử lý các file JSON tree...")
+
+        # Bước 1: Học từ super-tree
+        super_tree_path = PROJECT_ROOT / self.tree_config[0]['super-tree']
         with open(super_tree_path, 'r', encoding='utf-8') as f:
             super_tree_data = json.load(f)
         self._learn_super_tree(super_tree_data, parent_uid=None, pitaka_root=None)
         self._apply_canonical_rules()
-        
-        # --- Bước 2: Xử lý tất cả các tree để tạo node ---
+
+        # Bước 2: Xử lý tất cả các tree để tạo node thô
         all_files = [super_tree_path]
-        # ... (giữ nguyên logic tập hợp file)
         file_entries = [e for e in self.tree_config if 'ignore' not in e and 'super-tree' not in e]
         for entry in file_entries:
             for _, path_str in entry.items():
-                path = Path(path_str)
-                if path.is_dir(): all_files.extend(sorted(path.glob('*.json')))
+                path = PROJECT_ROOT / path_str
+                if path.is_dir():
+                    all_files.extend(sorted(path.glob('*.json')))
         
         for file_path in all_files:
             if file_path.name in self.ignore_list:
@@ -82,11 +78,18 @@ class HierarchyProcessor:
                 continue
             self._process_file(file_path)
 
+        # Bước 3: Lọc các node không hợp lệ
+        logger.info(f"Tổng số node ban đầu: {len(self.nodes)}. Bắt đầu lọc các node không có trong Suttaplex...")
+        filtered_nodes = [node for node in self.nodes if node['uid'] in self.valid_uids]
+        logger.info(f"Tổng số node sau khi lọc: {len(filtered_nodes)}.")
+        self.nodes = filtered_nodes
+        
+        # Bước 4: Tính toán các loại position
         logger.info("Tính toán global_position cho các node...")
         for i, node in enumerate(self.nodes):
             node['global_position'] = i
         
-        # --- Bước cuối: Liên kết các node và tính depth_position ---
+        # Bước 5: Liên kết các node
         self._link_nodes_within_books()
         return self.nodes
 

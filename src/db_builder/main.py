@@ -49,29 +49,29 @@ def main():
         logger.info(f"Database sẽ được tạo tại: {db_path}")
 
         with DatabaseManager(db_path) as db_manager:
-            # --- TẠO TẤT CẢ BẢNG CÙNG LÚC ---
             db_manager.create_tables_from_schema()
 
-            # --- Xử lý Hierarchy ---
-            logger.info("--- Bắt đầu xử lý Hierarchy ---")
-            h_processor = HierarchyProcessor(db_config['tree'])
-            nodes_data = h_processor.process_trees()
-            db_manager.insert_data("Hierarchy", nodes_data)
-
-            # --- Xử lý Bibliography ---
+            # --- Bước 1: Xử lý Bibliography ---
             logger.info("--- Bắt đầu xử lý Bibliography ---")
             b_processor = BiblioProcessor(db_config['bibliography'])
-            # --- THAY ĐỔI: Nhận cả data và map ---
             biblio_data, biblio_map = b_processor.process()
             db_manager.insert_data("Bibliography", biblio_data)
 
-            # --- Xử lý Suttaplex & Sutta_References ---
+            # --- Bước 2: Xử lý Suttaplex để lấy "danh sách vàng" ---
             logger.info("--- Bắt đầu xử lý Suttaplex & Sutta_References ---")
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, sutta_references_data = s_processor.process() # <-- Đổi tên biến
+            suttaplex_data, sutta_references_data, valid_uids = s_processor.process()
+
+            # --- Ghi Suttaplex TRƯỚC ---
             db_manager.insert_data("Suttaplex", suttaplex_data)
             db_manager.insert_data("Sutta_References", sutta_references_data)
-
+            
+            # --- Sau đó mới xử lý và ghi Hierarchy ---
+            logger.info("--- Bắt đầu xử lý Hierarchy ---")
+            h_processor = HierarchyProcessor(db_config['tree'], valid_uids)
+            nodes_data = h_processor.process_trees()
+            db_manager.insert_data("Hierarchy", nodes_data)
+            
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
     else:

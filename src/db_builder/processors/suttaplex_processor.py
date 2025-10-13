@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 class SuttaplexProcessor:
     """Xử lý dữ liệu suttaplex để điền vào các bảng liên quan."""
 
-    # --- THAY ĐỔI: Nhận thêm biblio_map ---
     def __init__(self, suttaplex_config: List[Dict[str, str]], biblio_map: Dict[str, str]):
         self.suttaplex_dir = PROJECT_ROOT / suttaplex_config[0]['data']
         self.biblio_map = biblio_map
         self.suttaplex_data: List[Dict[str, Any]] = []
-        self.sutta_references_data: List[Dict[str, Any]] = [] # <-- Đổi tên
+        self.sutta_references_data: List[Dict[str, Any]] = []
 
 
-    def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Quét, đọc, và trích xuất dữ liệu suttaplex thành 2 danh sách."""
+    def process(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], set]:
+        """Quét, đọc, trích xuất dữ liệu và trả về một set các UID hợp lệ."""
+        valid_uids = set() # <-- TẠO SET MỚI
         logger.info(f"Bắt đầu quét dữ liệu suttaplex từ thư mục: {self.suttaplex_dir}")
 
         json_files = list(self.suttaplex_dir.glob('**/*.json'))
@@ -41,6 +41,7 @@ class SuttaplexProcessor:
                     if not uid:
                         logger.warning(f"Bỏ qua suttaplex card tại index {index} trong file '{file_path.name}' vì thiếu 'uid'.")
                         continue
+                    valid_uids.add(uid)
 
                     def clean_value(value):
                         if isinstance(value, str):
@@ -79,5 +80,5 @@ class SuttaplexProcessor:
                 logger.error(f"Lỗi khi xử lý file {file_path.name}: {e}", exc_info=True)
             # ------------------------------------
         
-        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex và {len(self.sutta_references_data)} Sutta_References records.")
-        return self.suttaplex_data, self.sutta_references_data
+        logger.info(f"✅ Đã trích xuất {len(self.suttaplex_data)} Suttaplex, {len(self.sutta_references_data)} Sutta_References, và tìm thấy {len(valid_uids)} UID hợp lệ.")
+        return self.suttaplex_data, self.sutta_references_data, valid_uids
