@@ -37,7 +37,7 @@ class SuttaplexProcessor:
         """Quét, xử lý file HTML và trả về một filepath_map."""
         if not self.html_text_dirs: return {}
 
-        # --- THAY ĐỔI: Tạo map một-nhiều cho author_name -> [uid1, uid2] ---
+        # ... (logic tạo map tra cứu không đổi)
         author_name_to_uids = defaultdict(list)
         for uid, data in authors_map.items():
             if data.get('author_name'):
@@ -53,48 +53,76 @@ class SuttaplexProcessor:
         for scan_dir in self.html_text_dirs:
             if not scan_dir.is_dir(): continue
             for html_file in scan_dir.glob('**/*.html'):
-                # ... (logic ignore, lấy sutta_uid và lang không đổi)
-                is_ignored = any(html_file.is_relative_to(p) for p in self.html_ignore_paths)
-                if is_ignored: continue
+                try:
+                    # --- THÊM NGOẠI LỆ: Xử lý riêng cho file sf36.html ---
+                    if html_file.stem == 'sf36':
+                        translation_id = 'sf36_root'
+                        if translation_id in known_translation_ids:
+                            html_filepath_map[translation_id] = html_file
+                            count += 1
+                        else:
+                            logger.warning(f"Quy tắc đặc biệt cho '{html_file.name}': không tìm thấy translation_id '{translation_id}' trong suttaplex data.")
+                        continue # Bỏ qua các xử lý còn lại cho file này
+                    # ---------------------------------------------------------
 
-                sutta_uid = html_file.stem
-                lang = html_file.relative_to(scan_dir).parts[0]
+                    is_ignored = any(html_file.is_relative_to(p) for p in self.html_ignore_paths)
+                    if is_ignored:
+                        continue
+                    sutta_uid = html_file.stem
+                    lang = html_file.relative_to(scan_dir).parts[0]
+                    with open(html_file, 'r', encoding='utf-8') as f: soup = BeautifulSoup(f, 'html.parser')
+                    author_tag = soup.find('meta', {'name': 'author'})
+                    if not (author_tag and 'content' in author_tag.attrs): continue
+                    author_name_from_meta = author_tag['content']
+                    
+                    potential_uids = author_name_to_uids.get(author_name_from_meta, [])
+                    if not potential_uids:
+                        potential_uids = author_short_to_uids.get(author_name_from_meta.lower(), [])
+                    if not potential_uids:
+                        parent_dir_name = html_file.parent.name
+                        if parent_dir_name in authors_map:
+                            potential_uids = [parent_dir_name]
 
-                with open(html_file, 'r', encoding='utf-8') as f: soup = BeautifulSoup(f, 'html.parser')
-                author_tag = soup.find('meta', {'name': 'author'})
-                if not (author_tag and 'content' in author_tag.attrs): continue
-                
-                author_name_from_meta = author_tag['content']
-                
-                # --- THAY ĐỔI: Tìm danh sách các uid tiềm năng ---
-                potential_uids = author_name_to_uids.get(author_name_from_meta, [])
-                if not potential_uids:
-                    potential_uids = author_short_to_uids.get(author_name_from_meta.lower(), [])
-                if not potential_uids:
-                    parent_dir_name = html_file.parent.name
-                    if parent_dir_name in authors_map:
-                        potential_uids = [parent_dir_name]
+                    if not potential_uids:
+                        logger.warning(f"Không tìm thấy author_uid nào cho '{author_name_from_meta}' trong file {html_file}")
+                        continue
 
-                if not potential_uids:
-                    logger.warning(f"Không tìm thấy author_uid nào cho '{author_name_from_meta}' trong file {html_file}")
-                    continue
+                    found_match = False
+                    for author_uid_candidate in potential_uids:
+                        # --- THAY ĐỔI: Logic xử lý 'taisho' được tinh chỉnh ---
+                        if author_uid_candidate == 'taisho':
+                            # 1. Thử quy tắc chuẩn trước
+                            standard_id = f"{lang}_{sutta_uid}_taisho"
+                            if standard_id in known_translation_ids:
+                                html_filepath_map[standard_id] = html_file
+                                count += 1
+                                found_match = True
+                                break
 
-                # --- THAY ĐỔI: Logic "Thử và Sai" ---
-                found_match = False
-                for author_uid_candidate in potential_uids:
-                    translation_id_candidate = f"{lang}_{sutta_uid}_{author_uid_candidate}"
-                    if translation_id_candidate in known_translation_ids:
-                        html_filepath_map[translation_id_candidate] = html_file
-                        count += 1
-                        found_match = True
-                        break # Tìm thấy là dừng ngay
-                
-                if not found_match:
-                     logger.debug(f"Đã tạo các ID {potential_uids} từ file {html_file} nhưng không khớp với suttaplex data.")
+                            # 2. Nếu quy tắc chuẩn thất bại, thử quy tắc đặc biệt
+                            special_id = f"{sutta_uid}_root-lzh-sct"
+                            if special_id in known_translation_ids:
+                                html_filepath_map[special_id] = html_file
+                                count += 1
+                                found_match = True
+                                break
+                        else:
+                            # Quy tắc chuẩn cho tất cả các author khác
+                            standard_id = f"{lang}_{sutta_uid}_{author_uid_candidate}"
+                            if standard_id in known_translation_ids:
+                                html_filepath_map[standard_id] = html_file
+                                count += 1
+                                found_match = True
+                                break # Tìm thấy là dừng ngay
+                    
+                    if not found_match:
+                        logger.debug(f"Đã tạo các ID ứng viên từ author '{author_name_from_meta}' của file {html_file} nhưng không khớp với suttaplex data.")
 
+                except Exception as e:
+                    logger.error(f"Lỗi khi xử lý file HTML {html_file}: {e}")
+        
         logger.info(f"Đã tạo map cho {count} file HTML.")
         return html_filepath_map
-
 
     def process(self) -> Tuple[List[Dict[str, Any]], ...]:
         # Bước 1: Trích xuất dữ liệu cơ bản

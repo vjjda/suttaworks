@@ -137,7 +137,7 @@ class HierarchyProcessor:
 
     def _process_file(self, file_path: Path):
         """Đọc file và bắt đầu đệ quy với các giá trị depth ban đầu."""
-        logger.debug(f"Đang xử lý file: {file_path.name}")
+        # logger.debug(f"Đang xử lý file: {file_path.name}")
         with open(file_path, 'r', encoding='utf-8') as f: data = json.load(f)
         
         is_super_tree = 'super-tree' in file_path.name
@@ -217,18 +217,16 @@ class HierarchyProcessor:
             nodes_by_book[book_root_key].append(node)
 
         for book_root, nodes_in_book in nodes_by_book.items():
-            logger.debug(f"Đang xử lý các node trong book_root: '{book_root}'")
+            # --- THAY ĐỔI: Bỏ log debug ở đây ---
+            # logger.debug(f"Đang xử lý các node trong book_root: '{book_root}'")
             
             nodes_by_depth_in_book = defaultdict(list)
             for node in nodes_in_book:
-                # --- THAY ĐỔI DUY NHẤT Ở ĐÂY ---
-                # Code cũ: nodes_by_depth_in_book[node['depth']].append(node)
-                # Code mới:
                 nodes_by_depth_in_book[node['pitaka_depth']].append(node)
 
-            # (Tôi cũng đổi tên biến 'depth' thành 'pitaka_depth' cho rõ ràng)
             for pitaka_depth, nodes_in_depth in nodes_by_depth_in_book.items():
-                logger.debug(f"  -> Đang liên kết {len(nodes_in_depth)} node ở pitaka_depth {pitaka_depth}...")
+                # --- THAY ĐỔI: Bỏ log debug ở đây ---
+                # logger.debug(f"  -> Đang liên kết {len(nodes_in_depth)} node ở pitaka_depth {pitaka_depth}...")
                 for i, node in enumerate(nodes_in_depth):
                     node['depth_position'] = i
                     node['prev_uid'] = nodes_in_depth[i-1]['uid'] if i > 0 else None
