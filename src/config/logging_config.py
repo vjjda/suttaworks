@@ -6,18 +6,23 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LOGS_DIR = PROJECT_ROOT / "logs"
 
-def setup_logging():
-    """Cấu hình logging với các cấp độ khác nhau cho file và console."""
+# --- THAY ĐỔI Ở ĐÂY ---
+def setup_logging(log_filename: str):
+    """
+    Cấu hình logging với các cấp độ khác nhau cho file và console.
+
+    Args:
+        log_filename: Tên file để lưu log (ví dụ: 'builder.log').
+    """
     LOGS_DIR.mkdir(exist_ok=True)
-    log_file = LOGS_DIR / "updater.log"
+    # --- THAY ĐỔI Ở ĐÂY ---
+    log_file = LOGS_DIR / log_filename
 
     root_logger = logging.getLogger()
     if root_logger.hasHandlers():
         root_logger.handlers.clear()
 
     # ---- Quan trọng: Đặt mức log của logger GỐC là DEBUG ----
-    # Điều này cho phép nó thu nhận tất cả các thông điệp.
-    # Việc lọc sẽ được thực hiện tại các handler.
     root_logger.setLevel(logging.DEBUG)
 
     # --- File Handler (Ghi lại mọi thứ từ mức DEBUG trở lên) ---

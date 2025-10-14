@@ -18,7 +18,7 @@ from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
 from src.db_updater.handlers import api_handler, gdrive_handler, git_handler, git_release_handler
 
-setup_logging()
+setup_logging("db_updater.log")
 log = logging.getLogger(__name__)
 
 # --- THAY ĐỔI 2: Sử dụng hằng số đã import ---
