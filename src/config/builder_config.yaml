@@ -20,4 +20,6 @@ suttacentral-sqlite:
           - "data/raw/git/suttacentral-data/sc_bilara_data/root"
         html_text: 
           - "data/raw/git/suttacentral-data/html_text"
+          - ignore:
+              - html_text/zz
   bilara: "to be done"
