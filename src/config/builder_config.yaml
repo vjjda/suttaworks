@@ -14,5 +14,10 @@ suttacentral-sqlite:
         - upp-tree.json
   suttaplex: 
     - data: "data/raw/suttaplex"
-    - blurb: "data/raw/git/suttacentral-data/sc_bilara_data/root/en/blurb"
+    - translation_files:
+        json_segment: 
+          - "data/raw/git/suttacentral-data/sc_bilara_data/translation"
+          - "data/raw/git/suttacentral-data/sc_bilara_data/root"
+        html_text: 
+          - "data/raw/git/suttacentral-data/html_text"
   bilara: "to be done"

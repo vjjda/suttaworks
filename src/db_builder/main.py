@@ -26,7 +26,6 @@ def main():
     )
     args = parser.parse_args()
     
-    # --- THAY ĐỔI Ở ĐÂY ---
     setup_logging("db_builder.log")
     logger.info("▶️ Bắt đầu chương trình xây dựng database...")
     
@@ -51,19 +50,26 @@ def main():
             logger.info("--- Bắt đầu xử lý Bibliography ---")
             b_processor = BiblioProcessor(db_config['bibliography'])
             biblio_data, biblio_map = b_processor.process()
-            db_manager.insert_data("Bibliography", biblio_data)
-
-            logger.info("--- Bắt đầu xử lý Suttaplex & Sutta_References ---")
+            
+            logger.info("--- Bắt đầu xử lý Suttaplex và các dữ liệu liên quan ---")
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            suttaplex_data, sutta_references_data, valid_uids, uid_to_type_map = s_processor.process()
-
+            # --- THAY ĐỔI: Nhận thêm dữ liệu trả về ---
+            (suttaplex_data, sutta_references_data, authors_data, languages_data, 
+             translations_data, valid_uids, uid_to_type_map) = s_processor.process()
+            
             logger.info("--- Bắt đầu xử lý Hierarchy ---")
             h_processor = HierarchyProcessor(db_config['tree'], valid_uids, uid_to_type_map)
             nodes_data = h_processor.process_trees()
             
+            # --- THAY ĐỔI: Chèn dữ liệu theo thứ tự mới để đảm bảo khóa ngoại ---
+            logger.info("--- Bắt đầu chèn dữ liệu vào database ---")
+            db_manager.insert_data("Bibliography", biblio_data)
+            db_manager.insert_data("Authors", authors_data)
+            db_manager.insert_data("Languages", languages_data)
             db_manager.insert_data("Suttaplex", suttaplex_data)
             db_manager.insert_data("Hierarchy", nodes_data)
             db_manager.insert_data("Sutta_References", sutta_references_data)
+            db_manager.insert_data("Translations", translations_data)
             
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
