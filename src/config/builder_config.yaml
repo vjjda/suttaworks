@@ -22,4 +22,6 @@ suttacentral-sqlite:
           - "data/raw/git/suttacentral-data/html_text"
           - ignore:
               - html_text/zz
+    - blurb_supplement:
+        - data/raw/supplement/blurb_supplement.tsv
   bilara: "to be done"
