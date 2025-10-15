@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,56 @@ class SuttaplexExtractor:
     def _clean_value(self, value):
         return value.strip() if isinstance(value, str) and value.strip() else (value if not isinstance(value, str) else None)
 
+    def _roman_to_int(self, s: str) -> int:
+        """Hàm phụ chuyển đổi một số La Mã (dạng chữ thường) sang số nguyên."""
+        s = s.lower()
+        roman_map = {'i': 1, 'v': 5, 'x': 10, 'l': 50, 'c': 100, 'd': 500, 'm': 1000}
+        result = 0
+        for i in range(len(s)):
+            if i > 0 and roman_map[s[i]] > roman_map[s[i-1]]:
+                result += roman_map[s[i]] - 2 * roman_map[s[i-1]]
+            else:
+                result += roman_map[s[i]]
+        return result
+
+    def _clean_volpage_string(self, text: Any) -> str | None:
+        """Thực hiện làm sạch và chuẩn hóa cho chuỗi volpage."""
+        if not text or not isinstance(text, str):
+            return None
+
+        items = [item.strip() for item in text.split(',')]
+        processed_items = []
+
+        for item in items:
+            if not item: continue
+            
+            # --- THAY ĐỔI 1: Bỏ neo '^' để xóa tiền tố ở bất kỳ đâu ---
+            cleaned_item = re.sub(r'\b(SN|AN|Ud|Iti)\b\s*', '', item)
+            # Sau khi xóa, có thể có khoảng trắng thừa ở đầu/cuối
+            cleaned_item = cleaned_item.strip()
+
+            # --- THAY ĐỔI 2: Dùng regex linh hoạt hơn cho tiền tố của số La Mã ---
+            # Pattern khớp với: (Bất kỳ tiền tố nào) (dấu cách) (Số La Mã) (dấu cách) (Phần còn lại)
+            match = re.match(r'^(.*?)\s+([ivxlcdmIVXLCDM]+)\s+(\d+.*)', cleaned_item)
+            if match:
+                prefix = match.group(1).strip()
+                roman = match.group(2)
+                rest = match.group(3)
+                
+                try:
+                    arabic_num = self._roman_to_int(roman)
+                    # Nối lại chuỗi, chỉ thêm dấu cách nếu có tiền tố
+                    if prefix:
+                        cleaned_item = f"{prefix} {arabic_num}.{rest}"
+                    else:
+                        cleaned_item = f"{arabic_num}.{rest}"
+                except KeyError:
+                    pass
+            
+            processed_items.append(cleaned_item)
+
+        return ', '.join(filter(None, processed_items))
+
     def _add_author(self, author_data: Dict[str, Any]):
         author_uid = self._clean_value(author_data.get('author_uid'))
         if author_uid and author_uid not in self.authors_map:
@@ -40,28 +91,23 @@ class SuttaplexExtractor:
     def execute(self):
         logger.info(f"Bắt đầu trích xuất dữ liệu suttaplex từ: {self.suttaplex_dir}")
 
-        # --- THAY ĐỔI: Sắp xếp file để ưu tiên thư mục 'update' sau cùng ---
         logger.info("Đang sắp xếp các file JSON để ưu tiên thư mục 'update'...")
         all_files = list(self.suttaplex_dir.glob('**/*.json'))
         
         update_files = []
         other_files = []
         
-        # Dùng .name để lấy tên thư mục chính xác
         update_dir_name = 'update'
 
         for file_path in all_files:
-            # Kiểm tra xem 'update' có phải là tên của một trong các thư mục cha không
             if any(part == update_dir_name for part in file_path.relative_to(self.suttaplex_dir).parts):
                 update_files.append(file_path)
             else:
                 other_files.append(file_path)
         
-        # Ghép danh sách lại, đảm bảo các file 'update' được xử lý cuối cùng
-        json_files = other_files + sorted(update_files) # Sắp xếp update_files để có thứ tự ổn định
+        json_files = other_files + sorted(update_files)
         
         logger.info(f"Đã sắp xếp {len(json_files)} file ({len(update_files)} file trong 'update').")
-        # --- KẾT THÚC THAY ĐỔI ---
 
         for file_path in json_files:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -74,7 +120,6 @@ class SuttaplexExtractor:
                 self.valid_uids.add(uid)
                 self.uid_to_type_map[uid] = card.get('type')
                 
-                # Xử lý trường hợp priority_author_uid là list
                 priority_author = card.get('priority_author_uid')
                 final_priority_author = None
                 if isinstance(priority_author, list):
@@ -96,12 +141,13 @@ class SuttaplexExtractor:
 
                 biblio_text = self._clean_value(card.get('biblio'))
                 reference_entry = {
-                    'uid': uid, 'volpages': self._clean_value(card.get('volpages')),
-                    'alt_volpages': self._clean_value(card.get('alt_volpages')),
+                    'uid': uid,
+                    'volpages': self._clean_volpage_string(card.get('volpages')),
+                    'alt_volpages': self._clean_volpage_string(card.get('alt_volpages')),
                     'biblio_uid': self.biblio_map.get(biblio_text) if biblio_text else None,
                     'verseNo': self._clean_value(card.get('verseNo')),
                 }
-                if any(v is not None for k, v in reference_entry.items() if k != 'uid'):
+                if any(v is not None and v != '' for k, v in reference_entry.items() if k != 'uid'):
                     self.sutta_references_data.append(reference_entry)
 
                 for trans in card.get('translations', []):
