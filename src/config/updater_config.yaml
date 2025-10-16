@@ -6,7 +6,9 @@ git:
       post:
         cips-json:
           path: data/raw/git/cips/src/data/general-index.csv
-          output: data/raw/git/cips.json
+          output: 
+            - topic-index: data/raw/git/cips_topic.json
+            - sutta-index: data/raw/git/cips_sutta.json
     - suttacentral-data: https://github.com/suttacentral/sc-data
       post:
         html_text:
