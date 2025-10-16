@@ -4,6 +4,9 @@ import subprocess
 import configparser
 from pathlib import Path
 
+# --- THAY ĐỔI 1: Import processor mới ---
+from src.db_updater.post_processors import bilara_processor
+
 log = logging.getLogger(__name__)
 
 def _run_command(command: list[str], cwd: Path):
@@ -23,13 +26,11 @@ def _run_command(command: list[str], cwd: Path):
             cwd=cwd
         )
         
-        # Ghi lại toàn bộ output vào log ở mức DEBUG để không làm nhiễu console
         if result.stdout:
             log.debug(f"STDOUT:\n{result.stdout.strip()}")
         if result.stderr:
             log.debug(f"STDERR:\n{result.stderr.strip()}")
         
-        # Nếu có lỗi, báo lỗi ra console
         if result.returncode != 0:
             log.error(f"Lệnh thất bại với mã lỗi: {result.returncode}")
             log.error(f"Thông báo lỗi:\n{result.stderr.strip()}")
@@ -45,7 +46,6 @@ def _run_command(command: list[str], cwd: Path):
     log.info("Lệnh đã thực thi thành công.")
     return True
 
-# Hàm process_git_submodules không thay đổi
 def process_git_submodules(submodules_config: list, project_root: Path, base_dir: Path):
     base_dir.mkdir(parents=True, exist_ok=True)
     gitmodules_path = project_root / ".gitmodules"
@@ -54,21 +54,47 @@ def process_git_submodules(submodules_config: list, project_root: Path, base_dir
         config.read(gitmodules_path)
 
     has_new_submodules = False
+    
+    # --- THAY ĐỔI 2: Cập nhật logic đọc config và thêm submodule ---
     for item in submodules_config:
-        for name, url in item.items():
-            submodule_path = base_dir / name
-            submodule_relative_path = Path(*submodule_path.parts[len(project_root.parts):])
-            section_name = f'submodule "{submodule_relative_path}"'
+        # item có thể là dict đơn giản {'name': 'url'} hoặc phức tạp hơn
+        # Lấy tên và url dựa trên key đầu tiên
+        name = list(item.keys())[0]
+        url = item[name]
 
-            if section_name not in config:
-                log.info(f"Phát hiện submodule mới '{name}'. Đang thêm...")
-                has_new_submodules = True
-                command = ["git", "submodule", "add", "--force", url, str(submodule_relative_path)]
-                _run_command(command, cwd=project_root)
+        submodule_path = base_dir / name
+        submodule_relative_path = Path(*submodule_path.parts[len(project_root.parts):])
+        section_name = f'submodule "{submodule_relative_path}"'
+
+        if section_name not in config:
+            log.info(f"Phát hiện submodule mới '{name}'. Đang thêm...")
+            has_new_submodules = True
+            command = ["git", "submodule", "add", "--force", url, str(submodule_relative_path)]
+            if not _run_command(command, cwd=project_root):
+                log.error(f"Không thể thêm submodule '{name}'. Dừng xử lý.")
+                return # Dừng lại nếu không thêm được submodule
 
     if not has_new_submodules:
         log.info("Không có submodule mới nào để thêm.")
 
     log.info("Bắt đầu cập nhật tất cả các submodule đã đăng ký...")
     update_command = ["git", "submodule", "update", "--init", "--remote", "--force"]
-    _run_command(update_command, cwd=project_root)
+    
+    # Chỉ chạy hậu xử lý nếu cập nhật thành công
+    if _run_command(update_command, cwd=project_root):
+        log.info("Cập nhật submodule hoàn tất. Bắt đầu giai đoạn hậu xử lý (post-processing)...")
+        
+        # --- THAY ĐỔI 3: Thêm logic hậu xử lý ---
+        for item in submodules_config:
+            submodule_name = list(item.keys())[0]
+            
+            # Xử lý cho 'bilara'
+            if 'bilara' in item:
+                log.info(f"🔎 Bắt đầu hậu xử lý 'bilara' cho submodule '{submodule_name}'...")
+                bilara_config = item['bilara']
+                bilara_processor.process_bilara_data(bilara_config, project_root)
+            
+            # Khung chờ cho 'html_text'
+            if 'html_text' in item:
+                log.info(f"🔎 Cấu hình 'html_text' được tìm thấy. Logic xử lý sẽ được thêm vào sau.")
+                # html_text_processor.process_html_text_data(...)

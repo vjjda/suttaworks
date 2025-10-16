@@ -4,6 +4,13 @@ git:
   git-submodule:
     - cips: https://github.com/thesunshade/CIPS
     - suttacentral-data: https://github.com/suttacentral/sc-data
+      html_text:
+        path: data/raw/git/suttacentral-data/html_text
+        output: data/raw/git/sc_html_text_authors.json
+      bilara:
+        path: data/raw/git/suttacentral-data/sc_bilara_data
+        folders: [comment, html, reference, root, translation, variant]
+        output: data/raw/git/sc_bilara.json
 release:
   git-release:
     dpd:
