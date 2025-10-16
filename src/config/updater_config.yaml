@@ -7,6 +7,7 @@ git:
       html_text:
         path: data/raw/git/suttacentral-data/html_text
         output: data/raw/git/sc_html_text_authors.json
+        ignore: [zz]
       bilara:
         path: data/raw/git/suttacentral-data/sc_bilara_data
         folders: [comment, html, reference, root, translation, variant]
