@@ -40,9 +40,9 @@ class BilaraProcessor:
                 data = json.load(f)
 
             segments = []
-            for segment_id, content in data.items():
+            for segment_uid, content in data.items():
                 segments.append({
-                    'segment_id': segment_id,
+                    'segment_uid': segment_uid,
                     'sutta_uid': sutta_uid,
                     'type': type_name,
                     'author_uid': author_uid,

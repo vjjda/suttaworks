@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS "Suttaplex" (
 
 -- Bảng mới cho các bản dịch
 CREATE TABLE IF NOT EXISTS "Translations" (
-    "translation_id" TEXT PRIMARY KEY,
-    "sutta_uid" TEXT NOT NULL, -- <-- THAY ĐỔI Ở ĐÂY
+    "translation_uid" TEXT PRIMARY KEY, -- << ĐÃ ĐỔI TÊN
+    "sutta_uid" TEXT,
     "author_uid" TEXT,
     "lang" TEXT,
     "title" TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "Translations" (
     "has_comment" INTEGER,
     "is_root" INTEGER,
     "file_path" TEXT,
-    FOREIGN KEY ("sutta_uid") REFERENCES "Suttaplex" ("uid"), -- <-- VÀ Ở ĐÂY
+    FOREIGN KEY ("sutta_uid") REFERENCES "Suttaplex" ("uid"),
     FOREIGN KEY ("author_uid") REFERENCES "Authors" ("author_uid"),
     FOREIGN KEY ("lang") REFERENCES "Languages" ("lang_code")
 );
@@ -79,15 +79,13 @@ CREATE TABLE IF NOT EXISTS "Bibliography" (
 
 -- Bảng chứa nội dung chi tiết của từng segment từ dữ liệu Bilara
 CREATE TABLE IF NOT EXISTS "Segments" (
-    "segment_id" TEXT NOT NULL,
+    "segment_uid" TEXT NOT NULL, -- << ĐÃ ĐỔI TÊN
     "sutta_uid" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "author_uid" TEXT NOT NULL,
     "lang" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    
-    -- Khóa chính tổng hợp để đảm bảo mỗi mẩu nội dung là duy nhất
-    PRIMARY KEY ("segment_id", "type", "author_uid", "lang")
+    PRIMARY KEY ("segment_uid", "type", "author_uid", "lang") -- << ĐÃ ĐỔI TÊN
 );
 
 -- Index để tăng tốc độ truy vấn theo sutta_uid

@@ -56,17 +56,17 @@ class SuttaplexProcessor:
         filepath_map = json_processor.execute()
 
         # 4. Xử lý file HTML và cập nhật map
-        known_ids = {item['translation_id'] for item in extractor.translations_data}
-        html_processor = HtmlFileProcessor(html_dirs, ignore_paths, extractor.authors_map, known_ids)
+        known_uids = {item['translation_uid'] for item in extractor.translations_data}
+        html_processor = HtmlFileProcessor(html_dirs, ignore_paths, extractor.authors_map, known_uids)
         html_filepath_map = html_processor.execute()
         filepath_map.update(html_filepath_map)
 
         # 5. Cập nhật file_path vào dữ liệu translations
         logger.info("Cập nhật file_path cho các bản dịch...")
         for translation in extractor.translations_data:
-            trans_id = translation.get('translation_id')
-            if trans_id in filepath_map:
-                translation['file_path'] = str(filepath_map[trans_id].relative_to(base_path))
+            trans_uid = translation.get('translation_uid')
+            if trans_uid in filepath_map:
+                translation['file_path'] = str(filepath_map[trans_uid].relative_to(base_path))
         
         logger.info("✅ Hoàn tất xử lý suttaplex.")
         

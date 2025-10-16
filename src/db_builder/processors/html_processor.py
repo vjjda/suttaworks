@@ -11,11 +11,11 @@ class HtmlFileProcessor:
     """Chuyên xử lý logic phức tạp của việc quét và tạo map cho các file HTML."""
 
     def __init__(self, html_text_dirs: List[Path], ignore_paths: List[Path], 
-                 authors_map: Dict, known_translation_ids: Set):
+                 authors_map: Dict, known_translation_uids: Set):
         self.html_text_dirs = html_text_dirs
         self.ignore_paths = ignore_paths
         self.authors_map = authors_map
-        self.known_translation_ids = known_translation_ids
+        self.known_translation_ids = known_translation_uids
 
     def execute(self) -> Dict[str, Path]:
         """Quét, xử lý file HTML và trả về một filepath_map."""

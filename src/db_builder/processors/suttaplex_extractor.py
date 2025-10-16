@@ -154,7 +154,7 @@ class SuttaplexExtractor:
                     self._add_author(trans)
                     self._add_language(trans.get('lang'), trans.get('lang_name'))
                     self.translations_data.append({
-                        'translation_id': self._clean_value(trans.get('id')),
+                        'translation_uid': self._clean_value(trans.get('id')), # << ĐÃ ĐỔI TÊN
                         'sutta_uid': uid, 'author_uid': self._clean_value(trans.get('author_uid')),
                         'lang': self._clean_value(trans.get('lang')), 'title': self._clean_value(trans.get('title')),
                         'publication_date': self._clean_value(trans.get('publication_date')),
