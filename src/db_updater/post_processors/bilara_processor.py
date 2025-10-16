@@ -22,10 +22,13 @@ def process_bilara_data(config: Dict, project_root: Path):
 
     log.info(f"Bắt đầu quét dữ liệu Bilara từ: {base_path}")
     
-    # --- THAY ĐỔI 1: Khởi tạo dict lồng nhau dựa trên config ---
-    # Thay vì một dict phẳng, ta tạo một dict với các key là tên thư mục.
     grouped_filepath_map = {folder: {} for folder in folders_to_scan}
     file_count = 0
+    
+    # --- THAY ĐỔI 1: Xác định thư mục gốc mới cho đường dẫn tương đối ---
+    # base_path là '.../suttacentral-data/sc_bilara_data'
+    # .parent sẽ là '.../suttacentral-data', đúng như bạn muốn.
+    relative_base = base_path.parent.parent
 
     for folder in folders_to_scan:
         scan_dir = base_path / folder
@@ -36,10 +39,10 @@ def process_bilara_data(config: Dict, project_root: Path):
         log.debug(f"Đang quét trong {scan_dir}...")
         for json_file in scan_dir.glob('**/*.json'):
             file_key = json_file.stem
-            relative_path = json_file.relative_to(project_root)
             
-            # --- THAY ĐỔI 2: Thêm dữ liệu vào đúng nhóm ---
-            # Thêm cặp key-value vào sub-dictionary tương ứng.
+            # --- THAY ĐỔI 2: Tạo đường dẫn tương đối từ gốc mới ---
+            relative_path = json_file.relative_to(relative_base)
+            
             grouped_filepath_map[folder][file_key] = str(relative_path)
             file_count += 1
 
@@ -48,7 +51,6 @@ def process_bilara_data(config: Dict, project_root: Path):
         output_file.parent.mkdir(parents=True, exist_ok=True)
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
-                # --- THAY ĐỔI 3: Ghi dict đã được nhóm vào file ---
                 json.dump(grouped_filepath_map, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã tạo file tổng hợp Bilara theo nhóm thành công.")
         except IOError as e:
