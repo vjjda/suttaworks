@@ -15,9 +15,9 @@ suttacentral-sqlite:
   suttaplex: 
     - data: "data/raw/suttaplex"
     - translation_files:
-        json_segment: 
-          - "data/raw/git/suttacentral-data/sc_bilara_data/translation"
-          - "data/raw/git/suttacentral-data/sc_bilara_data/root"
+        json_segment:
+          path: "data/raw/git/sc_bilara.json"
+          groups: [root, translation]
         html_text: 
           - "data/raw/git/suttacentral-data/html_text"
           - ignore:

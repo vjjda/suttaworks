@@ -10,18 +10,22 @@ logger = logging.getLogger(__name__)
 class HtmlFileProcessor:
     """Chuyên xử lý logic phức tạp của việc quét và tạo map cho các file HTML."""
 
+    # --- THAY ĐỔI: Thêm base_path vào constructor ---
     def __init__(self, html_text_dirs: List[Path], ignore_paths: List[Path], 
-                 authors_map: Dict, known_translation_uids: Set):
+                 authors_map: Dict, known_translation_uids: Set, base_path: Path):
         self.html_text_dirs = html_text_dirs
         self.ignore_paths = ignore_paths
         self.authors_map = authors_map
         self.known_translation_ids = known_translation_uids
+        self.base_path = base_path # <-- Lưu lại base_path
 
-    def execute(self) -> Dict[str, Path]:
-        """Quét, xử lý file HTML và trả về một filepath_map."""
+    # --- THAY ĐỔI: Kiểu trả về là Dict[str, str] ---
+    def execute(self) -> Dict[str, str]:
+        """Quét, xử lý file HTML và trả về một map có giá trị là chuỗi đường dẫn tương đối."""
         if not self.html_text_dirs: 
             return {}
 
+        # ... (Phần logic tìm author_uid giữ nguyên) ...
         author_name_to_uids = defaultdict(list)
         for uid, data in self.authors_map.items():
             if data.get('author_name'):
@@ -38,11 +42,20 @@ class HtmlFileProcessor:
             if not scan_dir.is_dir(): continue
             for html_file in scan_dir.glob('**/*.html'):
                 try:
+                    # --- THAY ĐỔI LOGIC LƯU PATH ---
+                    # Thay vì lưu đối tượng Path, ta lưu chuỗi đường dẫn tương đối
+                    def add_to_map(trans_id, file_path):
+                        nonlocal count
+                        relative_path_str = str(file_path.relative_to(self.base_path))
+                        html_filepath_map[trans_id] = relative_path_str
+                        count += 1
+                    
+                    # ... (Phần logic xử lý file giữ nguyên) ...
+
                     if html_file.stem == 'sf36':
                         translation_id = 'sf36_root'
                         if translation_id in self.known_translation_ids:
-                            html_filepath_map[translation_id] = html_file
-                            count += 1
+                            add_to_map(translation_id, html_file) # <-- Dùng hàm mới
                         else:
                             logger.warning(f"Quy tắc đặc biệt cho '{html_file.name}': không tìm thấy translation_id '{translation_id}' trong suttaplex data.")
                         continue
@@ -50,7 +63,8 @@ class HtmlFileProcessor:
                     is_ignored = any(html_file.is_relative_to(p) for p in self.ignore_paths)
                     if is_ignored:
                         continue
-
+                    
+                    # ... (Phần logic tìm sutta_uid, lang, author giữ nguyên) ...
                     sutta_uid = html_file.stem
                     lang = html_file.relative_to(scan_dir).parts[0]
                     with open(html_file, 'r', encoding='utf-8') as f: 
@@ -79,22 +93,19 @@ class HtmlFileProcessor:
                         if author_uid_candidate == 'taisho':
                             standard_id = f"{lang}_{sutta_uid}_taisho"
                             if standard_id in self.known_translation_ids:
-                                html_filepath_map[standard_id] = html_file
-                                count += 1
+                                add_to_map(standard_id, html_file) # <-- Dùng hàm mới
                                 found_match = True
                                 break
 
                             special_id = f"{sutta_uid}_root-lzh-sct"
                             if special_id in self.known_translation_ids:
-                                html_filepath_map[special_id] = html_file
-                                count += 1
+                                add_to_map(special_id, html_file) # <-- Dùng hàm mới
                                 found_match = True
                                 break
                         else:
                             standard_id = f"{lang}_{sutta_uid}_{author_uid_candidate}"
                             if standard_id in self.known_translation_ids:
-                                html_filepath_map[standard_id] = html_file
-                                count += 1
+                                add_to_map(standard_id, html_file) # <-- Dùng hàm mới
                                 found_match = True
                                 break
                     

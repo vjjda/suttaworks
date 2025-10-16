@@ -21,13 +21,22 @@ class SuttaplexProcessor:
         
     def _parse_config_paths(self):
         """Hàm phụ để lấy các loại đường dẫn từ file config."""
-        json_dirs, html_dirs, ignore_paths, blurb_paths = [], [], [], []
+        json_config, html_dirs, ignore_paths, blurb_paths = {}, [], [], []
         
         for item in self.suttaplex_config:
             if 'translation_files' in item:
                 tf_config = item['translation_files']
-                if 'json_segment' in tf_config:
-                    json_dirs.extend([PROJECT_ROOT / p for p in tf_config['json_segment']])
+                
+                if 'json_segment' in tf_config and isinstance(tf_config['json_segment'], dict):
+                    js_config = tf_config['json_segment']
+                    # Sửa lại đường dẫn theo góp ý của bạn
+                    manifest_path = PROJECT_ROOT / "data/raw/git/sc_bilara.json"
+                    groups = js_config.get('groups', [])
+                    if manifest_path.exists() and groups:
+                        json_config = {'path': manifest_path, 'groups': groups}
+                    else:
+                        logger.warning("Cấu hình 'json_segment' không hợp lệ hoặc file sc_bilara.json không tồn tại.")
+
                 if 'html_text' in tf_config:
                     for p in tf_config['html_text']:
                         if isinstance(p, str):
@@ -37,36 +46,43 @@ class SuttaplexProcessor:
             if 'blurb_supplement' in item:
                 blurb_paths.extend([PROJECT_ROOT / p for p in item['blurb_supplement']])
                 
-        return json_dirs, html_dirs, ignore_paths, blurb_paths
+        return json_config, html_dirs, ignore_paths, blurb_paths
 
     def process(self) -> Tuple[List[Dict[str, Any]], ...]:
         # 1. Trích xuất dữ liệu thô từ JSON
         extractor = SuttaplexExtractor(self.suttaplex_dir, self.biblio_map).execute()
         
-        # Lấy các đường dẫn từ file config
-        json_dirs, html_dirs, ignore_paths, blurb_paths = self._parse_config_paths()
+        json_config, html_dirs, ignore_paths, blurb_paths = self._parse_config_paths()
         
         # 2. Xử lý dữ liệu blurb bổ sung
         blurb_processor = BlurbSupplementProcessor(blurb_paths)
         suttaplex_data = blurb_processor.execute(extractor.suttaplex_data)
 
-        # 3. Tìm đường dẫn file JSON cho các bản dịch
-        base_path = (PROJECT_ROOT / "data/raw/git").resolve()
-        json_processor = JsonPathProcessor(base_path, json_dirs)
-        filepath_map = json_processor.execute()
+        # 3. Tìm đường dẫn file JSON cho các bản dịch từ file manifest
+        filepath_map = {}
+        if json_config:
+            json_processor = JsonPathProcessor(
+                manifest_path=json_config['path'], 
+                groups=json_config['groups']
+            )
+            filepath_map = json_processor.execute()
+        else:
+            logger.warning("Không có cấu hình hợp lệ cho JsonPathProcessor.")
 
         # 4. Xử lý file HTML và cập nhật map
+        base_path = (PROJECT_ROOT / "data/raw/git").resolve()
         known_uids = {item['translation_uid'] for item in extractor.translations_data}
-        html_processor = HtmlFileProcessor(html_dirs, ignore_paths, extractor.authors_map, known_uids)
+        html_processor = HtmlFileProcessor(html_dirs, ignore_paths, extractor.authors_map, known_uids, base_path)
         html_filepath_map = html_processor.execute()
         filepath_map.update(html_filepath_map)
 
-        # 5. Cập nhật file_path vào dữ liệu translations
+        # 5. Cập nhật file_path vào dữ liệu translations (giờ đã rất đơn giản)
         logger.info("Cập nhật file_path cho các bản dịch...")
         for translation in extractor.translations_data:
             trans_uid = translation.get('translation_uid')
             if trans_uid in filepath_map:
-                translation['file_path'] = str(filepath_map[trans_uid].relative_to(base_path))
+                # Chỉ cần gán trực tiếp chuỗi đã có
+                translation['file_path'] = filepath_map[trans_uid]
         
         logger.info("✅ Hoàn tất xử lý suttaplex.")
         
