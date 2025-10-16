@@ -13,7 +13,7 @@ from src.db_builder.database_manager import DatabaseManager
 from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
 from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
 from src.db_builder.processors.biblio_processor import BiblioProcessor
-from src.db_builder.processors.bilara_processor import BilaraProcessor
+from src.db_builder.processors.bilara_segment_processor import BilaraSegmentProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -70,16 +70,21 @@ def main():
             db_manager.insert_data("Sutta_References", sutta_references_data)
             db_manager.insert_data("Translations", translations_data)
             
-            # --- TÍCH HỢP PROCESSOR MỚI ---
+            # --- CẬP NHẬT LOGIC GỌI PROCESSOR ---
             logger.info("--- Bắt đầu xử lý dữ liệu Segment Bilara ---")
-            if 'bilara' in db_config:
-                # Lấy phần tử đầu tiên (dictionary) từ danh sách
-                bilara_proc = BilaraProcessor(db_config['bilara'][0])
-                segment_data = bilara_proc.process()
-                db_manager.insert_data("Segments", segment_data)
+            all_segment_data = []
+            if 'bilara-segment' in db_config: # <-- Đổi key
+                for config_item in db_config['bilara-segment']: # <-- Đổi key
+                    logger.info(f"Chạy BilaraSegmentProcessor cho config: {config_item['json']}")
+                    segment_proc = BilaraSegmentProcessor(config_item) # <-- Đổi tên class
+                    segment_data = segment_proc.process()
+                    all_segment_data.extend(segment_data)
+                
+                logger.info(f"Tổng hợp được {len(all_segment_data)} segment từ tất cả các nguồn Bilara.")
+                db_manager.insert_data("Segments", all_segment_data)
             else:
-                logger.warning("Không tìm thấy cấu hình 'bilara' trong builder_config.yaml. Bỏ qua.")
-            # --- KẾT THÚC TÍCH HỢP ---
+                logger.warning("Không tìm thấy cấu hình 'bilara-segment' trong builder_config.yaml. Bỏ qua.")
+            # --- KẾT THÚC CẬP NHẬT ---
             
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)

@@ -22,12 +22,8 @@ suttacentral-sqlite:
           path: "data/raw/git/sc_html_text_authors.json"
     - blurb_supplement:
         - data/raw/supplement/blurb_supplement.tsv
-  bilara:
-    - path: data/raw/git/suttacentral-data/sc_bilara_data
-      types: 
-        - root
-        - reference
-        - html
-        - variant
-        - translation
-        - comment
+  bilara-segment:
+    - folder: "data/raw/git/suttacentral-data"
+      json: "data/raw/git/sc_bilara.json"
+    # - folder: "path/to/another/source"
+    #   json: "path/to/another/manifest.json"
