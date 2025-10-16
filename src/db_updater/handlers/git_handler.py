@@ -4,17 +4,18 @@ import subprocess
 import configparser
 from pathlib import Path
 
-# --- THAY ĐỔI 1: Import thêm processor mới ---
-from src.db_updater.post_processors import bilara_processor, html_text_authors_processor
+# --- THAY ĐỔI 1: Import tất cả các processor ---
+from src.db_updater.post_processors import (
+    bilara_processor, 
+    html_text_authors_processor,
+    cips_processor
+)
 
 log = logging.getLogger(__name__)
 
 # Hàm _run_command không thay đổi...
 def _run_command(command: list[str], cwd: Path):
-    """
-    Chạy một lệnh một cách đơn giản, đợi nó hoàn thành,
-    và ghi lại output vào log file.
-    """
+    # ... (giữ nguyên)
     log.info(f"Đang chạy lệnh: {' '.join(command)}...")
     log.info("(Tiến trình này có thể mất vài phút, vui lòng chờ...)")
     try:
@@ -56,15 +57,12 @@ def process_git_submodules(submodules_config: list, project_root: Path, base_dir
         config.read(gitmodules_path)
 
     has_new_submodules = False
-    
     for item in submodules_config:
         name = list(item.keys())[0]
         url = item[name]
-
         submodule_path = base_dir / name
         submodule_relative_path = Path(*submodule_path.parts[len(project_root.parts):])
         section_name = f'submodule "{submodule_relative_path}"'
-
         if section_name not in config:
             log.info(f"Phát hiện submodule mới '{name}'. Đang thêm...")
             has_new_submodules = True
@@ -82,16 +80,21 @@ def process_git_submodules(submodules_config: list, project_root: Path, base_dir
     if _run_command(update_command, cwd=project_root):
         log.info("Cập nhật submodule hoàn tất. Bắt đầu giai đoạn hậu xử lý (post-processing)...")
         
+        # --- THAY ĐỔI 2: Cập nhật logic hậu xử lý để đọc key 'post' ---
         for item in submodules_config:
-            submodule_name = list(item.keys())[0]
-            
-            if 'bilara' in item:
-                log.info(f"🔎 Bắt đầu hậu xử lý 'bilara' cho submodule '{submodule_name}'...")
-                bilara_config = item['bilara']
-                bilara_processor.process_bilara_data(bilara_config, project_root)
-            
-            # --- THAY ĐỔI 2: Kích hoạt logic xử lý html_text ---
-            if 'html_text' in item:
-                log.info(f"🔎 Bắt đầu hậu xử lý 'html_text' cho submodule '{submodule_name}'...")
-                html_text_config = item['html_text']
-                html_text_authors_processor.process_html_text_authors_data(html_text_config, project_root)
+            if 'post' in item and isinstance(item['post'], dict):
+                submodule_name = list(item.keys())[0]
+                log.info(f"🔎 Tìm thấy các tác vụ hậu xử lý cho submodule '{submodule_name}':")
+                
+                post_tasks = item['post']
+                for task_name, task_config in post_tasks.items():
+                    log.info(f"  -> Bắt đầu tác vụ: '{task_name}'...")
+                    
+                    if task_name == "bilara":
+                        bilara_processor.process_bilara_data(task_config, project_root)
+                    elif task_name == "html_text":
+                        html_text_authors_processor.process_html_text_authors_data(task_config, project_root)
+                    elif task_name == "cips-json":
+                        cips_processor.process_cips_csv_to_json(task_config, project_root)
+                    else:
+                        log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
