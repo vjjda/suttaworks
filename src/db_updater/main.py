@@ -61,7 +61,7 @@ def main():
             api_handler.process_api_data(handler_config, destination_dir)
         elif module_type == "google-drive":
             gdrive_handler.process_gdrive_data(handler_config, destination_dir)
-        elif module_type == "sub-submodule":
+        elif module_type == "git-submodule":
             # Cần truyền PROJECT_ROOT vào function này
             git_handler.process_git_submodules(handler_config, constants.PROJECT_ROOT, destination_dir)
         elif module_type == "git-release":

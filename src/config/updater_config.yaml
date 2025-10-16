@@ -1,7 +1,7 @@
 # Path: src/config/updater_config.yaml
 
 git:
-  sub-submodule:
+  git-submodule:
     - cips: https://github.com/thesunshade/CIPS
     - suttacentral-data: https://github.com/suttacentral/sc-data
 release:
