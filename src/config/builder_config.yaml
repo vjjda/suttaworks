@@ -24,4 +24,12 @@ suttacentral-sqlite:
               - html_text/zz
     - blurb_supplement:
         - data/raw/supplement/blurb_supplement.tsv
-  bilara: "to be done"
+  bilara:
+    - path: data/raw/git/suttacentral-data/sc_bilara_data
+      types: 
+        - root
+        - reference
+        - html
+        - variant
+        - translation
+        - comment

@@ -1,4 +1,5 @@
 # Path: src/db_builder/main.py
+
 #!/usr/bin/env python3
 
 import logging
@@ -12,7 +13,7 @@ from src.db_builder.database_manager import DatabaseManager
 from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
 from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
 from src.db_builder.processors.biblio_processor import BiblioProcessor
-
+from src.db_builder.processors.bilara_processor import BilaraProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +49,11 @@ def main():
             db_manager.create_tables_from_schema()
 
             logger.info("--- Bắt đầu xử lý Bibliography ---")
-            b_processor = BiblioProcessor(db_config['bibliography'])
+            b_processor = BiblioProcessor(db_config['bibliography'][0])
             biblio_data, biblio_map = b_processor.process()
             
             logger.info("--- Bắt đầu xử lý Suttaplex và các dữ liệu liên quan ---")
             s_processor = SuttaplexProcessor(db_config['suttaplex'], biblio_map)
-            # --- THAY ĐỔI: Nhận thêm dữ liệu trả về ---
             (suttaplex_data, sutta_references_data, authors_data, languages_data, 
              translations_data, valid_uids, uid_to_type_map) = s_processor.process()
             
@@ -61,7 +61,6 @@ def main():
             h_processor = HierarchyProcessor(db_config['tree'], valid_uids, uid_to_type_map)
             nodes_data = h_processor.process_trees()
             
-            # --- THAY ĐỔI: Chèn dữ liệu theo thứ tự mới để đảm bảo khóa ngoại ---
             logger.info("--- Bắt đầu chèn dữ liệu vào database ---")
             db_manager.insert_data("Bibliography", biblio_data)
             db_manager.insert_data("Authors", authors_data)
@@ -70,6 +69,17 @@ def main():
             db_manager.insert_data("Hierarchy", nodes_data)
             db_manager.insert_data("Sutta_References", sutta_references_data)
             db_manager.insert_data("Translations", translations_data)
+            
+            # --- TÍCH HỢP PROCESSOR MỚI ---
+            logger.info("--- Bắt đầu xử lý dữ liệu Segment Bilara ---")
+            if 'bilara' in db_config:
+                # Lấy phần tử đầu tiên (dictionary) từ danh sách
+                bilara_proc = BilaraProcessor(db_config['bilara'][0])
+                segment_data = bilara_proc.process()
+                db_manager.insert_data("Segments", segment_data)
+            else:
+                logger.warning("Không tìm thấy cấu hình 'bilara' trong builder_config.yaml. Bỏ qua.")
+            # --- KẾT THÚC TÍCH HỢP ---
             
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)

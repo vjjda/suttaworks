@@ -76,3 +76,24 @@ CREATE TABLE IF NOT EXISTS "Bibliography" (
     "citation_key" TEXT,
     "full_citation" TEXT
 );
+
+-- Bảng chứa nội dung chi tiết của từng segment từ dữ liệu Bilara
+CREATE TABLE IF NOT EXISTS "Segments" (
+    "segment_id" TEXT NOT NULL,
+    "sutta_uid" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "author_uid" TEXT NOT NULL,
+    "lang" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    
+    -- Khóa chính tổng hợp để đảm bảo mỗi mẩu nội dung là duy nhất
+    PRIMARY KEY ("segment_id", "type", "author_uid", "lang")
+);
+
+-- Index để tăng tốc độ truy vấn theo sutta_uid
+CREATE INDEX IF NOT EXISTS "idx_segments_on_sutta_uid" 
+ON "Segments" ("sutta_uid");
+
+-- Index tổng hợp để tối ưu cho các truy vấn phức tạp hơn
+CREATE INDEX IF NOT EXISTS "idx_segments_sutta_compound" 
+ON "Segments" ("sutta_uid", "type", "author_uid", "lang");
