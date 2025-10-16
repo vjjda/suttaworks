@@ -17,7 +17,7 @@ git:
           ignore: [zz]
         bilara:
           path: data/raw/git/suttacentral-data/sc_bilara_data
-          folders: [comment, html, reference, root, translation, variant]
+          folders: [root, html, reference, variant, translation, comment]
           output: data/raw/git/sc_bilara.json
 release:
   git-release:
