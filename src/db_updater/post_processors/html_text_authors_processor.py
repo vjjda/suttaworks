@@ -16,8 +16,6 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
     try:
         base_path = project_root / config['path']
         output_file = project_root / config['output']
-        # --- THAY ĐỔI 1: Đọc danh sách ignore từ config ---
-        # Sử dụng .get() để an toàn nếu key 'ignore' không tồn tại, trả về list rỗng.
         ignore_list = config.get('ignore', [])
     except KeyError as e:
         log.error(f"Thiếu key bắt buộc trong cấu hình 'html_text': {e}")
@@ -27,7 +25,6 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
         log.error(f"Thư mục nguồn cho 'html_text' không tồn tại: {base_path}")
         return
 
-    # Chuyển đổi các đường dẫn ignore tương đối thành đường dẫn tuyệt đối để so sánh
     ignore_paths = [base_path.joinpath(p).resolve() for p in ignore_list]
     log.info(f"Các thư mục sẽ bị bỏ qua: {ignore_paths}")
 
@@ -39,9 +36,6 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
     for html_file in base_path.glob('**/*.html'):
         total_files_scanned += 1
         
-        # --- THAY ĐỔI 2: Thêm logic kiểm tra và bỏ qua file ---
-        # Kiểm tra xem đường dẫn của file có nằm trong thư mục ignore nào không.
-        # any() sẽ trả về True ngay khi tìm thấy một kết quả khớp.
         is_ignored = any(
             html_file.resolve().is_relative_to(ignored_dir) for ignored_dir in ignore_paths
         )
@@ -49,7 +43,7 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
         if is_ignored:
             ignored_files_count += 1
             log.debug(f"Bỏ qua file: {html_file}")
-            continue # Bỏ qua file này và chuyển sang file tiếp theo
+            continue
 
         try:
             with open(html_file, 'r', encoding='utf-8') as f:
@@ -78,12 +72,21 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
 
     if author_map:
         processed_count = total_files_scanned - ignored_files_count
-        log.info(f"Trích xuất được thông tin từ {processed_count} file. Đang ghi ra file: {output_file}")
+        log.info(f"Trích xuất được thông tin từ {processed_count} file. Đang chuẩn bị ghi file...")
         output_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # --- THAY ĐỔI: Bọc kết quả vào cấu trúc mới ---
+        final_output = {
+            "suttacentral-data": {
+                "html_text": author_map
+            }
+        }
+        
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(author_map, f, ensure_ascii=False, indent=2)
-            log.info("✅ Đã tạo file tổng hợp html_text theo cấu trúc thư mục thành công.")
+                # Ghi cấu trúc final_output thay vì author_map
+                json.dump(final_output, f, ensure_ascii=False, indent=2)
+            log.info(f"✅ Đã tạo file tổng hợp tại: {output_file}")
         except IOError as e:
             log.error(f"Không thể ghi file JSON: {e}")
     else:
