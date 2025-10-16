@@ -8,7 +8,6 @@ from src.config.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
-# --- THAY ĐỔI TÊN CLASS ---
 class BilaraSegmentProcessor:
     """Xử lý dữ liệu từ file manifest Bilara và tạo dữ liệu cho bảng Segments."""
 
@@ -16,22 +15,54 @@ class BilaraSegmentProcessor:
         folder_path = PROJECT_ROOT / config.get('folder', '')
         self.base_path = folder_path.parent
         self.manifest_path = PROJECT_ROOT / config.get('json', '')
-        # --- CẬP NHẬT LOG ---
-        logger.info(f"Khởi tạo BilaraSegmentProcessor với manifest: {self.manifest_path.name}")
+        
+        # --- LOGIC MỚI: TẠO DANH SÁCH TÁC GIẢ HỢP LỆ ---
+        self.valid_authors = set()
+        
+        # 1. Đọc từ file _author.json
+        authors_manifest_path = PROJECT_ROOT / config.get('authors', '')
+        if authors_manifest_path.exists():
+            try:
+                with open(authors_manifest_path, 'r', encoding='utf-8') as f:
+                    authors_data = json.load(f)
+                    # Lấy tất cả các key (chính là author_uid) từ file JSON
+                    self.valid_authors.update(authors_data.keys())
+            except json.JSONDecodeError:
+                logger.error(f"Lỗi khi đọc file JSON tác giả: {authors_manifest_path}")
+        else:
+            logger.warning(f"Không tìm thấy file manifest tác giả: {authors_manifest_path}")
 
-    # ... (các hàm _parse_file và process không có thay đổi về logic) ...
+        # 2. Đọc từ danh sách extra_authors
+        extra_authors = config.get('extra_authors', [])
+        self.valid_authors.update(extra_authors)
+        
+        logger.info(f"Khởi tạo BilaraSegmentProcessor với {len(self.valid_authors)} tác giả hợp lệ.")
+        # --- KẾT THÚC LOGIC MỚI ---
+
     def _parse_file(self, full_file_path: Path, relative_path_str: str, type_name: str) -> List[Dict[str, Any]]:
+        """
+        Phân tích một file JSON, trích xuất metadata, và xác thực author_uid.
+        """
         try:
             p = Path(relative_path_str)
             parts = p.parts
             
+            potential_author_uid = None
             try:
                 type_index = parts.index(type_name)
                 lang = parts[type_index + 1]
-                author_uid = parts[type_index + 2]
+                potential_author_uid = parts[type_index + 2]
             except (ValueError, IndexError):
-                logger.warning(f"Cấu trúc đường dẫn không hợp lệ, không thể trích xuất metadata từ: {relative_path_str}")
+                logger.warning(f"Cấu trúc đường dẫn không hợp lệ từ: {relative_path_str}")
                 return []
+
+            # --- LOGIC MỚI: XÁC THỰC AUTHOR_UID ---
+            author_uid = None # Mặc định là None (sẽ thành NULL trong DB)
+            if potential_author_uid in self.valid_authors:
+                author_uid = potential_author_uid
+            else:
+                logger.debug(f"Author UID '{potential_author_uid}' từ path '{relative_path_str}' không hợp lệ. Đặt thành NULL.")
+            # --- KẾT THÚC LOGIC MỚI ---
 
             sutta_uid = full_file_path.stem.split('_')[0]
 
@@ -44,7 +75,7 @@ class BilaraSegmentProcessor:
                     'segment_uid': segment_uid,
                     'sutta_uid': sutta_uid,
                     'type': type_name,
-                    'author_uid': author_uid,
+                    'author_uid': author_uid, # <-- Sử dụng author_uid đã được xác thực
                     'lang': lang,
                     'content': content
                 })
@@ -57,6 +88,7 @@ class BilaraSegmentProcessor:
             return []
 
     def process(self) -> List[Dict[str, Any]]:
+        # ... (Hàm này giữ nguyên không thay đổi) ...
         if not self.manifest_path.exists():
             logger.error(f"File manifest Bilara không tồn tại: {self.manifest_path}")
             return []

@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS "Segments" (
     "segment_uid" TEXT NOT NULL, -- << ĐÃ ĐỔI TÊN
     "sutta_uid" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "author_uid" TEXT NOT NULL,
+    "author_uid" TEXT,
     "lang" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     PRIMARY KEY ("segment_uid", "type", "author_uid", "lang") -- << ĐÃ ĐỔI TÊN
