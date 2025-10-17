@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS "Suttaplex" (
 
 -- Bảng mới cho các bản dịch
 CREATE TABLE IF NOT EXISTS "Translations" (
-    "translation_uid" TEXT PRIMARY KEY, -- << ĐÃ ĐỔI TÊN
-    "sutta_uid" TEXT,
+    "translation_uid" TEXT PRIMARY KEY,
+    "sc_uid" TEXT, -- << ĐỔI TÊN TỪ sutta_uid
     "author_uid" TEXT,
     "lang" TEXT,
     "title" TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "Translations" (
     "has_comment" INTEGER,
     "is_root" INTEGER,
     "file_path" TEXT,
-    FOREIGN KEY ("sutta_uid") REFERENCES "Suttaplex" ("uid"),
+    FOREIGN KEY ("sc_uid") REFERENCES "Suttaplex" ("uid"),
     FOREIGN KEY ("author_uid") REFERENCES "Authors" ("author_uid"),
     FOREIGN KEY ("lang") REFERENCES "Languages" ("lang_code")
 );
