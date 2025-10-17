@@ -53,27 +53,29 @@ def _run_command(command: list[str], cwd: Path):
 
 # --- HÀM ĐÃ ĐƯỢC CẬP NHẬT ---
 def process_git_submodules(
-    submodules_config: list, 
+    handler_config: dict, # THAY ĐỔI 1: Nhận vào dict thay vì list
     project_root: Path, 
     base_dir: Path,
     run_update: bool = True,
     run_post_process: bool = True,
     tasks_to_run: list[str] | None = None
 ):
-    # --- Bước 1: Cập nhật (nếu được yêu cầu) ---
+    # --- Giai đoạn 1: Cập nhật submodules ---
     if run_update:
         log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU GIT SUBMODULE ===")
         base_dir.mkdir(parents=True, exist_ok=True)
+        
         gitmodules_path = project_root / ".gitmodules"
         config = configparser.ConfigParser()
         if gitmodules_path.exists():
             config.read(gitmodules_path)
 
+        # THAY ĐỔI 2: Lặp qua dictionary các repo
+        submodule_repos = {k: v for k, v in handler_config.items() if k != 'post'}
+        submodule_names = list(submodule_repos.keys())
         has_new_submodules = False
-        for item in submodules_config:
-            # ... (logic thêm submodule mới không đổi)
-            name = list(item.keys())[0]
-            url = item[name]
+
+        for name, url in submodule_repos.items():
             submodule_path = base_dir / name
             submodule_relative_path = Path(*submodule_path.parts[len(project_root.parts):])
             section_name = f'submodule "{submodule_relative_path}"'
@@ -93,7 +95,6 @@ def process_git_submodules(
         
         if _run_command(update_command, cwd=project_root):
             log.info("Cập nhật submodule hoàn tất. Tự động commit các thay đổi...")
-            submodule_names = [list(item.keys())[0] for item in submodules_config]
             commit_message = f"chore(data): Update data from submodules: {', '.join(submodule_names)}"
             add_command = ["git", "add", "."]
             commit_command = ["git", "commit", "-m", commit_message]
@@ -106,32 +107,27 @@ def process_git_submodules(
     else:
         log.info("Bỏ qua giai đoạn cập nhật dữ liệu Git Submodule theo yêu cầu.")
 
-
-    # --- Bước 2: Hậu xử lý (nếu được yêu cầu) ---
+    # --- Giai đoạn 2: Hậu xử lý ---
+    # THAY ĐỔI 3: Logic hậu xử lý giờ nằm ngoài vòng lặp repo và giống hệt api_handler
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
-        for item in submodules_config:
-            if 'post' in item and isinstance(item['post'], dict):
-                submodule_name = list(item.keys())[0]
-                log.info(f"🔎 Tìm thấy các tác vụ hậu xử lý cho submodule '{submodule_name}':")
-                
-                post_tasks = item['post']
-                for task_name, task_config in post_tasks.items():
-                    # --- Logic điều khiển chạy tác vụ cụ thể ---
-                    if tasks_to_run is None or task_name in tasks_to_run:
-                        log.info(f"  -> Bắt đầu tác vụ: '{task_name}'...")
-                        
-                        if task_name == "bilara":
-                            bilara_processor.process_bilara_data(task_config, project_root)
-                        elif task_name == "html_text":
-                            html_text_authors_processor.process_html_text_authors_data(task_config, project_root)
-                        elif task_name == "cips-json":
-                            cips_processor.process_cips_csv_to_json(task_config, project_root)
-                        elif task_name == "parallels":
-                            parallels_processor.process_parallels_data(task_config, project_root)
-                        else:
-                            log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
+        if 'post' in handler_config:
+            post_tasks = handler_config['post']
+            for task_name, task_config in post_tasks.items():
+                if tasks_to_run is None or task_name in tasks_to_run:
+                    log.info(f"  -> Bắt đầu tác vụ: '{task_name}'...")
+                    
+                    if task_name == "bilara":
+                        bilara_processor.process_bilara_data(task_config, project_root)
+                    elif task_name == "html_text":
+                        html_text_authors_processor.process_html_text_authors_data(task_config, project_root)
+                    elif task_name == "cips-json":
+                        cips_processor.process_cips_csv_to_json(task_config, project_root)
+                    elif task_name == "parallels":
+                        parallels_processor.process_parallels_data(task_config, project_root)
                     else:
-                        log.info(f"  -> Bỏ qua tác vụ '{task_name}' theo yêu cầu.")
+                        log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
+                else:
+                    log.info(f"  -> Bỏ qua tác vụ '{task_name}' theo yêu cầu.")
     else:
         log.info("Bỏ qua giai đoạn hậu xử lý theo yêu cầu.")

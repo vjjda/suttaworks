@@ -2,26 +2,25 @@
 
 git:
   git-submodule:
-    - cips: https://github.com/thesunshade/CIPS
-      post:
-        cips-json:
-          path: data/raw/git/cips/src/data/general-index.csv
-          output: 
-            - topic-index: data/raw/git/cips_topic.json
-            - sutta-index: data/raw/git/cips_sutta.json
-    - suttacentral-data: https://github.com/suttacentral/sc-data
-      post:
-        html_text:
-          path: data/raw/git/suttacentral-data/html_text
-          output: data/raw/git/sc_html_text_authors.json
-          ignore: [zz]
-        bilara:
-          path: data/raw/git/suttacentral-data/sc_bilara_data
-          folders: [root, html, reference, variant, translation, comment]
-          output: data/raw/git/sc_bilara.json
-        parallels:
-          path: data/raw/git/suttacentral-data/relationship/parallels.json
-          output: data/raw/git/sc_parallels.json
+    cips: https://github.com/thesunshade/CIPS
+    suttacentral-data: https://github.com/suttacentral/sc-data
+    post:
+      cips-json:
+        path: data/raw/git/cips/src/data/general-index.csv
+        output: 
+          - topic-index: data/raw/git/cips_topic.json
+          - sutta-index: data/raw/git/cips_sutta.json
+      html_text:
+        path: data/raw/git/suttacentral-data/html_text
+        output: data/raw/git/sc_html_text_authors.json
+        ignore: [zz]
+      bilara:
+        path: data/raw/git/suttacentral-data/sc_bilara_data
+        folders: [root, html, reference, variant, translation, comment]
+        output: data/raw/git/sc_bilara.json
+      parallels:
+        path: data/raw/git/suttacentral-data/relationship/parallels.json
+        output: data/raw/git/sc_parallels.json
 release:
   git-release:
     dpd:
@@ -32,11 +31,17 @@ release:
           extract: true
           extract_to_folder: true
         - dpd.db.tar.bz2
+    post:
+      task-place-holder-1:
+      task-place-holder-2:
 buddha-words:
   google-drive:
     zip: https://drive.google.com/drive/folders/17DZmO3PaN_bXPyDuQGRkX4dcYQ0tXhe8
     version-date: '(?:bw)(\d+)\.(?:7z|zip)$'
     extract: "bw"
+    post:
+      task-place-holder-1:
+      task-place-holder-2:
 suttaplex:
   api:
     base_url: "https://suttacentral.net/api/suttaplex/"

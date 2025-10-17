@@ -22,16 +22,16 @@ def get_available_tasks(config: dict, module_name: str) -> list[str]:
     tasks = []
     module_config = config.get(module_name, {})
     
+    # --- THAY ĐỔI LOGIC CHO GIT-SUBMODULE ---
     if 'git-submodule' in module_config:
-        for repo in module_config['git-submodule']:
-            if 'post' in repo and isinstance(repo['post'], dict):
-                tasks.extend(repo['post'].keys())
-    # --- THÊM KHỐI MÃ NÀY ---
+        # Giờ đây 'post' là một key trực tiếp, giống hệt 'api'
+        submodule_config = module_config['git-submodule']
+        if 'post' in submodule_config and isinstance(submodule_config['post'], dict):
+            tasks.extend(submodule_config['post'].keys())
     elif 'api' in module_config:
         api_config = module_config['api']
         if 'post' in api_config and isinstance(api_config['post'], dict):
             tasks.extend(api_config['post'].keys())
-    # --- KẾT THÚC KHỐI MÃ MỚI ---
     
     return list(dict.fromkeys(tasks))
 
