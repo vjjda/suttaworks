@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 
 # Hàm _run_command không thay đổi...
 def _run_command(command: list[str], cwd: Path):
-    # ... (giữ nguyên)
     log.info(f"Đang chạy lệnh: {' '.join(command)}...")
     log.info("(Tiến trình này có thể mất vài phút, vui lòng chờ...)")
     try:
@@ -32,6 +31,12 @@ def _run_command(command: list[str], cwd: Path):
             log.debug(f"STDOUT:\n{result.stdout.strip()}")
         if result.stderr:
             log.debug(f"STDERR:\n{result.stderr.strip()}")
+        
+        # Sửa đổi nhỏ: Cho phép git commit trả về lỗi nếu không có gì để commit
+        # mà không dừng toàn bộ chương trình.
+        if "nothing to commit, working tree clean" in result.stdout:
+            log.info("Không có thay đổi nào để commit.")
+            return True # Coi như thành công
         
         if result.returncode != 0:
             log.error(f"Lệnh thất bại với mã lỗi: {result.returncode}")
@@ -78,9 +83,28 @@ def process_git_submodules(submodules_config: list, project_root: Path, base_dir
     update_command = ["git", "submodule", "update", "--init", "--remote", "--force"]
     
     if _run_command(update_command, cwd=project_root):
-        log.info("Cập nhật submodule hoàn tất. Bắt đầu giai đoạn hậu xử lý (post-processing)...")
+        log.info("Cập nhật submodule hoàn tất.")
         
-        # --- THAY ĐỔI 2: Cập nhật logic hậu xử lý để đọc key 'post' ---
+        # --- KHỐI MÃ MỚI: TỰ ĐỘNG COMMIT CÁC THAY ĐỔI ---
+        log.info("Chuẩn bị commit các thay đổi từ submodule (nếu có)...")
+        
+        # 1. Lấy danh sách tên các submodule để đưa vào commit message
+        submodule_names = [list(item.keys())[0] for item in submodules_config]
+        commit_message = f"chore(data): Update data from submodules: {', '.join(submodule_names)}"
+        
+        # 2. Thực hiện 'git add' và 'git commit'
+        add_command = ["git", "add", "."]
+        commit_command = ["git", "commit", "-m", commit_message]
+        
+        if _run_command(add_command, cwd=project_root):
+            # Lệnh commit sẽ được chạy. Hàm _run_command đã được sửa đổi
+            # để xử lý trường hợp không có gì thay đổi.
+            _run_command(commit_command, cwd=project_root)
+        else:
+            log.error("Lỗi khi thực hiện 'git add', bỏ qua bước commit.")
+        # --- KẾT THÚC KHỐI MÃ MỚI ---
+
+        log.info("Bắt đầu giai đoạn hậu xử lý (post-processing)...")
         for item in submodules_config:
             if 'post' in item and isinstance(item['post'], dict):
                 submodule_name = list(item.keys())[0]
