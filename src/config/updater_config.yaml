@@ -19,6 +19,9 @@ git:
           path: data/raw/git/suttacentral-data/sc_bilara_data
           folders: [root, html, reference, variant, translation, comment]
           output: data/raw/git/sc_bilara.json
+        parallels:
+          path: data/raw/git/suttacentral-data/relationship/parallels.json
+          output: data/raw/git/sc_parallels.json
 release:
   git-release:
     dpd:

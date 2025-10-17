@@ -8,7 +8,8 @@ from pathlib import Path
 from src.db_updater.post_processors import (
     bilara_processor, 
     html_text_authors_processor,
-    cips_processor
+    cips_processor,
+    parallels_processor
 )
 
 log = logging.getLogger(__name__)
@@ -120,5 +121,7 @@ def process_git_submodules(submodules_config: list, project_root: Path, base_dir
                         html_text_authors_processor.process_html_text_authors_data(task_config, project_root)
                     elif task_name == "cips-json":
                         cips_processor.process_cips_csv_to_json(task_config, project_root)
+                    elif task_name == "parallels":
+                        parallels_processor.process_parallels_data(task_config, project_root)
                     else:
                         log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
