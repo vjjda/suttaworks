@@ -79,13 +79,13 @@ CREATE TABLE IF NOT EXISTS "Bibliography" (
 
 -- Bảng chứa nội dung chi tiết của từng segment từ dữ liệu Bilara
 CREATE TABLE IF NOT EXISTS "Segments" (
-    "segment_uid" TEXT NOT NULL, -- << ĐÃ ĐỔI TÊN
+    "segment_uid" TEXT NOT NULL,
     "sutta_uid" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "author_uid" TEXT,
+    "author_alias" TEXT,      -- << ĐỔI TÊN CỘT
     "lang" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    PRIMARY KEY ("segment_uid", "type", "author_uid", "lang") -- << ĐÃ ĐỔI TÊN
+    PRIMARY KEY ("segment_uid", "type", "author_alias", "lang") -- << CẬP NHẬT KHÓA CHÍNH
 );
 
 -- Index để tăng tốc độ truy vấn theo sutta_uid
@@ -94,4 +94,4 @@ ON "Segments" ("sutta_uid");
 
 -- Index tổng hợp để tối ưu cho các truy vấn phức tạp hơn
 CREATE INDEX IF NOT EXISTS "idx_segments_sutta_compound" 
-ON "Segments" ("sutta_uid", "type", "author_uid", "lang");
+ON "Segments" ("sutta_uid", "type", "author_alias", "lang"); -- << CẬP NHẬT INDEX

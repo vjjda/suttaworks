@@ -25,5 +25,3 @@ suttacentral-sqlite:
   bilara-segment:
     - folder: "data/raw/git/suttacentral-data"
       json: "data/raw/git/sc_bilara.json"
-      authors: data/raw/git/suttacentral-data/sc_bilara_data/_author.json
-      extra_authors: [site, blurb]

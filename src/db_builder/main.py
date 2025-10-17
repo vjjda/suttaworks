@@ -73,10 +73,11 @@ def main():
             # --- CẬP NHẬT LOGIC GỌI PROCESSOR ---
             logger.info("--- Bắt đầu xử lý dữ liệu Segment Bilara ---")
             all_segment_data = []
-            if 'bilara-segment' in db_config: # <-- Đổi key
-                for config_item in db_config['bilara-segment']: # <-- Đổi key
+            if 'bilara-segment' in db_config:
+                for config_item in db_config['bilara-segment']:
                     logger.info(f"Chạy BilaraSegmentProcessor cho config: {config_item['json']}")
-                    segment_proc = BilaraSegmentProcessor(config_item) # <-- Đổi tên class
+                    # Không cần truyền db_manager nữa
+                    segment_proc = BilaraSegmentProcessor(config_item)
                     segment_data = segment_proc.process()
                     all_segment_data.extend(segment_data)
                 
@@ -85,7 +86,7 @@ def main():
             else:
                 logger.warning("Không tìm thấy cấu hình 'bilara-segment' trong builder_config.yaml. Bỏ qua.")
             # --- KẾT THÚC CẬP NHẬT ---
-            
+                
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
     else:
