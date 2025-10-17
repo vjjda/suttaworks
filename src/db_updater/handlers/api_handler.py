@@ -1,71 +1,72 @@
-# Path: /src/db_updater/handlers/api_handler.py
-import httpx
-from pathlib import Path
-import time
+# Path: src/db_updater/handlers/api_handler.py
 import logging
+import requests
 import json
+from pathlib import Path
+from typing import Dict
+
+from src.db_updater.post_processors import suttaplex_json_processor
+from src.config import constants
 
 log = logging.getLogger(__name__)
 
-def process_api_data(api_config: dict, destination_dir: Path):
+def _fetch_and_save(url: str, filepath: Path):
     """
-    Tải về và làm đẹp các file JSON từ API bằng cách kết hợp base_url và danh sách keywords.
+    Tải và lưu một file JSON, đảm bảo thư mục cha tồn tại.
     """
-    log.info(f"Thư mục gốc cho suttaplex: {destination_dir}")
+    try:
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        # Lệnh này sẽ tạo cả thư mục cha nếu nó chưa tồn tại
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(response.json(), f, ensure_ascii=False, indent=2)
+        log.info(f"Đã lưu thành công: {filepath.name}")
+        return True
+    except requests.exceptions.RequestException as e:
+        log.error(f"Lỗi khi tải {url}: {e}")
+        return False
 
-    # --- THAY ĐỔI 1: Lấy base_url và các nhóm từ config ---
-    base_url = api_config.get("base_url")
-    if not base_url:
-        log.error("Cấu hình API cho suttaplex thiếu 'base_url'. Vui lòng kiểm tra updater_config.yaml.")
+def process_api_data(handler_config: Dict, destination_dir: Path):
+    """
+    Tải dữ liệu từ API, lưu vào các thư mục con theo nhóm,
+    và sau đó chạy các tác vụ hậu xử lý nếu có.
+    """
+    base_url = handler_config.get('base_url')
+    groups = handler_config.get('groups', {})
+
+    if not base_url or not groups:
+        log.error("Thiếu 'base_url' hoặc 'groups' trong cấu hình api.")
+        return
+
+    log.info(f"Bắt đầu tải dữ liệu API từ base_url: {base_url}")
+    all_successful = True
+
+    for group_name, uids in groups.items():
+        log.info(f"--> Đang xử lý nhóm: {group_name}")
+        for uid in uids:
+            url = f"{base_url}{uid}"
+            
+            # --- THAY ĐỔI: Khôi phục lại logic tạo thư mục con cho mỗi nhóm ---
+            # Ví dụ: data/raw/suttaplex/sutta/an.json
+            filepath = destination_dir / group_name / f"{uid}.json"
+            
+            if not _fetch_and_save(url, filepath):
+                all_successful = False
+    
+    if not all_successful:
+        log.error("Có lỗi xảy ra trong quá trình tải API, sẽ không chạy hậu xử lý.")
         return
         
-    groups = api_config.get("groups", {})
-    if not groups:
-        log.warning("Không tìm thấy 'groups' nào trong cấu hình API cho suttaplex.")
-        return
+    log.info("Tải dữ liệu API hoàn tất.")
 
-    total_files = sum(len(keywords) for keywords in groups.values())
-    count = 0
-
-    # --- THAY ĐỔI 2: Vòng lặp đơn giản hơn ---
-    # Lặp qua các nhóm như 'sutta', 'kn-late', 'vinaya'
-    for group_name, keywords in groups.items():
-        # Tên nhóm trong config giờ đã là tên thư mục mong muốn
-        group_destination_dir = destination_dir / group_name
-        group_destination_dir.mkdir(parents=True, exist_ok=True)
-        
-        log.info(f"Đang xử lý nhóm: '{group_name}'. Lưu vào: {group_destination_dir}")
-
-        # Lặp qua danh sách các keyword ('dn', 'mn', ...)
-        for name in keywords:
-            count += 1
-            # Tạo URL động
-            url = f"{base_url}{name}"
-            log.debug(f"({count}/{total_files}) Đang tải {name} từ {url}")
-            
-            dest_file = group_destination_dir / f"{name}.json"
-            
-            try:
-                response = httpx.get(url, follow_redirects=True, timeout=30.0)
-                response.raise_for_status()
-                
-                raw_json = json.loads(response.text)
-                
-                with open(dest_file, 'w', encoding='utf-8') as f:
-                    json.dump(raw_json, f, indent=2, ensure_ascii=False)
-                
-                log.debug(f"  -> Đã lưu thành công và làm đẹp file {dest_file.name}")
-
-            except json.JSONDecodeError:
-                log.error(f"  -> LỖI: Nội dung tải về từ {url} không phải là JSON hợp lệ. Đã lưu file thô để kiểm tra.")
-                with open(dest_file, 'w', encoding='utf-8') as f:
-                    f.write(response.text)
-            except httpx.HTTPStatusError as e:
-                log.error(f"  -> LỖI HTTP khi tải {name}. Mã lỗi: {e.response.status_code}", exc_info=True)
-            except httpx.RequestError as e:
-                log.error(f"  -> LỖI MẠNG khi kết nối tới {e.request.url}", exc_info=True)
-            except Exception:
-                log.exception(f"  -> LỖI KHÔNG XÁC ĐỊNH khi tải {name}")
-            
-            time.sleep(0.1)
-        log.info(f"Hoàn tất xử lý nhóm: {group_name}.")
+    if 'post' in handler_config:
+        log.info("Bắt đầu các tác vụ hậu xử lý...")
+        for task_name, task_config in handler_config['post'].items():
+            if task_name == 'suttaplex-json':
+                log.info("--> Chạy processor: suttaplex-json")
+                # Truyền vào destination_dir (thư mục gốc suttaplex),
+                # processor sẽ tự quét các thư mục con bên trong.
+                suttaplex_json_processor.process_suttaplex_json(task_config, constants.PROJECT_ROOT, destination_dir)
+            else:
+                log.warning(f"--> Tác vụ hậu xử lý không được hỗ trợ: {task_name}")
