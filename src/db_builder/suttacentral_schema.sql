@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS "Segments" (
     "author_alias" TEXT,
     "content" TEXT NOT NULL,
     -- CẬP NHẬT LẠI KHÓA CHÍNH ĐỂ ĐẢM BẢO TÍNH DUY NHẤT
-    PRIMARY KEY ("sc_uid", "segment", "type", "author_alias", "lang")
+    PRIMARY KEY ("sc_uid", "segment", "type", "lang", "author_alias")
 );
 
 -- Index để tăng tốc độ truy vấn theo sc_uid
