@@ -49,7 +49,7 @@ def main():
             db_manager.create_tables_from_schema()
 
             logger.info("--- Bắt đầu xử lý Bibliography ---")
-            b_processor = BiblioProcessor(db_config['bibliography'][0])
+            b_processor = BiblioProcessor(db_config['bibliography'])
             biblio_data, biblio_map = b_processor.process()
             
             logger.info("--- Bắt đầu xử lý Suttaplex và các dữ liệu liên quan ---")
@@ -70,23 +70,18 @@ def main():
             db_manager.insert_data("Sutta_References", sutta_references_data)
             db_manager.insert_data("Translations", translations_data)
             
-            # --- CẬP NHẬT LOGIC GỌI PROCESSOR ---
+            # --- CẬP NHẬT: Xử lý bilara-segment trực tiếp, không cần kiểm tra ---
             logger.info("--- Bắt đầu xử lý dữ liệu Segment Bilara ---")
-            all_segment_data = []
-            if 'bilara-segment' in db_config:
-                for config_item in db_config['bilara-segment']:
-                    logger.info(f"Chạy BilaraSegmentProcessor cho config: {config_item['json']}")
-                    # Không cần truyền db_manager nữa
-                    segment_proc = BilaraSegmentProcessor(config_item)
-                    segment_data = segment_proc.process()
-                    all_segment_data.extend(segment_data)
-                
-                logger.info(f"Tổng hợp được {len(all_segment_data)} segment từ tất cả các nguồn Bilara.")
-                db_manager.insert_data("Segments", all_segment_data)
-            else:
-                logger.warning("Không tìm thấy cấu hình 'bilara-segment' trong builder_config.yaml. Bỏ qua.")
+            config_item = db_config['bilara-segment']
+            
+            logger.info(f"Chạy BilaraSegmentProcessor cho config: {config_item['json']}")
+            segment_proc = BilaraSegmentProcessor(config_item)
+            segment_data = segment_proc.process()
+
+            logger.info(f"Tổng hợp được {len(segment_data)} segment.")
+            db_manager.insert_data("Segments", segment_data)
             # --- KẾT THÚC CẬP NHẬT ---
-                
+            
     except Exception as e:
         logger.critical(f"❌ Chương trình gặp lỗi nghiêm trọng và đã dừng lại.", exc_info=True)
     else:
