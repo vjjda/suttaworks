@@ -6,20 +6,6 @@ from typing import Dict, List, Set
 
 log = logging.getLogger(__name__)
 
-def _is_value_empty(value_dict: dict) -> bool:
-    """
-    Kiểm tra xem tất cả các giá trị trong một dictionary có rỗng không.
-    Hàm này kiểm tra đệ quy cho các dictionary lồng nhau.
-    "Rỗng" được định nghĩa là None, [], {}, "", 0.
-    """
-    for v in value_dict.values():
-        if isinstance(v, dict):
-            if not _is_value_empty(v):  # Đệ quy
-                return False
-        elif v not in [None, [], {}, "", 0]:
-            return False
-    return True
-
 def _process_group(group_name: str, base_dir: Path, target_dict: Dict, existing_keys: Set[str] = None):
     """
     Hàm phụ trợ để xử lý tất cả các file JSON trong một thư mục nhóm.
@@ -44,18 +30,17 @@ def _process_group(group_name: str, base_dir: Path, target_dict: Dict, existing_
                         continue
                     
                     uid = item['uid']
+
+                    # Kiểm tra và bỏ qua các mục có uid là None hoặc chuỗi "null"
+                    if uid is None or uid == "null":
+                        log.debug(f"Phát hiện mục có uid không hợp lệ ({uid}), bỏ qua.")
+                        continue
                     
                     if existing_keys and uid in existing_keys:
                         continue
                     
                     value = item.copy()
                     del value['uid']
-                    
-                    # Thêm logic kiểm tra giá trị rỗng
-                    if _is_value_empty(value):
-                        log.debug(f"Mục với uid '{uid}' có tất cả giá trị rỗng, bỏ qua.")
-                        continue
-
                     target_dict[uid] = value
 
         except (json.JSONDecodeError, IOError) as e:
