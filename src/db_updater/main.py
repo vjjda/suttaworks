@@ -22,16 +22,18 @@ def get_available_tasks(config: dict, module_name: str) -> list[str]:
     tasks = []
     module_config = config.get(module_name, {})
     
-    # Logic này đặc biệt cho git-submodule vì nó có thể chứa nhiều repo
     if 'git-submodule' in module_config:
         for repo in module_config['git-submodule']:
             if 'post' in repo and isinstance(repo['post'], dict):
                 tasks.extend(repo['post'].keys())
-    # Có thể mở rộng cho các loại handler khác nếu chúng có 'post' tasks
-    # Ví dụ: elif 'api' in module_config and 'post' in module_config['api']:
-    #           tasks.extend(module_config['api']['post'].keys())
+    # --- THÊM KHỐI MÃ NÀY ---
+    elif 'api' in module_config:
+        api_config = module_config['api']
+        if 'post' in api_config and isinstance(api_config['post'], dict):
+            tasks.extend(api_config['post'].keys())
+    # --- KẾT THÚC KHỐI MÃ MỚI ---
     
-    return list(dict.fromkeys(tasks)) # Trả về danh sách duy nhất
+    return list(dict.fromkeys(tasks))
 
 def main():
     # --- Lượt 1: Parser tối giản để lấy tên module ---
@@ -98,10 +100,14 @@ def main():
             run_post_process=run_post_process,
             tasks_to_run=tasks_to_run
         )
-    # Tương tự cho các handler khác nếu cần
-    # elif module_type == "api":
-    #     if run_update: api_handler.process_api_data(...)
-    #     if run_post_process: # Gọi hàm hậu xử lý của api_handler
+    elif module_type == "api":
+        api_handler.process_api_data(
+            handler_config, 
+            destination_dir,
+            run_update=run_update,
+            run_post_process=run_post_process,
+            tasks_to_run=tasks_to_run
+        )
     else:
         log.warning(f"Chưa hỗ trợ logic chạy tùy chỉnh cho handler '{module_type}'.")
 
