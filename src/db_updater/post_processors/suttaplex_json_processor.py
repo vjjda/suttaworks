@@ -6,13 +6,23 @@ from typing import Dict, List, Set
 
 log = logging.getLogger(__name__)
 
+def _is_value_empty(value_dict: dict) -> bool:
+    """
+    Kiểm tra xem tất cả các giá trị trong một dictionary có rỗng không.
+    Hàm này kiểm tra đệ quy cho các dictionary lồng nhau.
+    "Rỗng" được định nghĩa là None, [], {}, "", 0.
+    """
+    for v in value_dict.values():
+        if isinstance(v, dict):
+            if not _is_value_empty(v):  # Đệ quy
+                return False
+        elif v not in [None, [], {}, "", 0]:
+            return False
+    return True
+
 def _process_group(group_name: str, base_dir: Path, target_dict: Dict, existing_keys: Set[str] = None):
     """
     Hàm phụ trợ để xử lý tất cả các file JSON trong một thư mục nhóm.
-    - group_name: Tên thư mục con để quét (ví dụ: 'update', 'sutta').
-    - base_dir: Thư mục gốc chứa các thư mục nhóm (ví dụ: 'data/raw/suttaplex').
-    - target_dict: Dictionary để thêm kết quả vào.
-    - existing_keys: Một set các key đã tồn tại để bỏ qua (chỉ dùng cho super-tree).
     """
     group_dir = base_dir / group_name
     if not group_dir.is_dir():
@@ -35,13 +45,17 @@ def _process_group(group_name: str, base_dir: Path, target_dict: Dict, existing_
                     
                     uid = item['uid']
                     
-                    # Nếu đang xử lý super-tree, bỏ qua nếu key đã tồn tại
                     if existing_keys and uid in existing_keys:
                         continue
                     
-                    # Tạo value là bản sao của item nhưng không có key 'uid'
                     value = item.copy()
                     del value['uid']
+                    
+                    # Thêm logic kiểm tra giá trị rỗng
+                    if _is_value_empty(value):
+                        log.debug(f"Mục với uid '{uid}' có tất cả giá trị rỗng, bỏ qua.")
+                        continue
+
                     target_dict[uid] = value
 
         except (json.JSONDecodeError, IOError) as e:
@@ -51,9 +65,6 @@ def _process_group(group_name: str, base_dir: Path, target_dict: Dict, existing_
 def process_suttaplex_json(config: Dict, project_root: Path, input_dir: Path):
     """
     Xử lý suttaplex JSON theo quy tắc priority và super-tree.
-    1. Xử lý các nhóm 'priority' trước.
-    2. Xử lý các nhóm 'super-tree', chỉ thêm các mục chưa tồn tại.
-    3. Gộp kết quả, đặt các mục mới từ 'super-tree' lên đầu.
     """
     try:
         output_file = project_root / config['output']
@@ -74,14 +85,13 @@ def process_suttaplex_json(config: Dict, project_root: Path, input_dir: Path):
 
     # Giai đoạn 2: Xử lý các nhóm super-tree
     super_tree_only_data = {}
-    priority_keys = set(priority_data.keys()) # Dùng set để tra cứu nhanh hơn
+    priority_keys = set(priority_data.keys())
     log.info(f"Giai đoạn 2: Đang xử lý các nhóm super-tree: {super_tree_groups}")
     for group in super_tree_groups:
         _process_group(group, input_dir, super_tree_only_data, existing_keys=priority_keys)
     log.info(f"-> Tìm thấy {len(super_tree_only_data)} mục mới không trùng lặp từ super-tree.")
 
     # Giai đoạn 3: Gộp và ghi file
-    # Đặt các mục mới từ super-tree lên trước, sau đó là các mục priority
     final_data = {**super_tree_only_data, **priority_data}
     
     if final_data:
