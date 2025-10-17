@@ -9,12 +9,17 @@ from src.config.constants import PROJECT_ROOT
 logger = logging.getLogger(__name__)
 
 class BilaraSegmentProcessor:
-    # ... (hàm __init__ và process giữ nguyên) ...
+    
     def __init__(self, config: Dict[str, Any]):
         folder_path = PROJECT_ROOT / config.get('folder', '')
         self.base_path = folder_path.parent
         self.manifest_path = PROJECT_ROOT / config.get('json', '')
-        logger.info(f"Khởi tạo BilaraSegmentProcessor (chế độ đơn giản) với manifest: {self.manifest_path.name}")
+        
+        self.author_remap = config.get('author-remap', {})
+        if self.author_remap:
+            logger.info(f"Đã tải {len(self.author_remap)} quy tắc author-remap.")
+
+        logger.info(f"Khởi tạo BilaraSegmentProcessor với manifest: {self.manifest_path.name}")
 
     def _parse_file(self, full_file_path: Path, relative_path_str: str, type_name: str, file_uid: str) -> List[Dict[str, Any]]:
         try:
@@ -30,26 +35,31 @@ class BilaraSegmentProcessor:
                 if len(parts) > type_index + 2:
                     author_alias = parts[type_index + 2]
             except (ValueError, IndexError):
-                # Lỗi này đã được xử lý, chỉ cần đảm bảo logic dưới đây chạy đúng
                 pass
 
-            # --- LOGIC MỚI: Đảm bảo lang và author_alias không phải là NULL ---
-            # Nếu một trong hai giá trị này không được tìm thấy, bỏ qua toàn bộ file
             if not lang or not author_alias:
                 logger.warning(f"Không thể xác định lang hoặc author_alias từ path: {relative_path_str}. Bỏ qua file.")
-                return [] # Trả về danh sách rỗng để bỏ qua
-            # --- KẾT THÚC LOGIC MỚI ---
+                return []
 
+            if self.author_remap and author_alias in self.author_remap:
+                remapped_value = self.author_remap[author_alias]
+                author_alias = remapped_value
+            
             sc_uid = full_file_path.stem.split('_')[0]
             with full_file_path.open('r', encoding='utf-8') as f:
                 data = json.load(f)
 
             segments = []
-            for segment_uid, content in data.items():
+            for composite_uid, content in data.items():
+                segment_num = composite_uid.split(':', 1)[1] if ':' in composite_uid else composite_uid
+                
+                # Cập nhật lại cấu trúc dictionary
                 segments.append({
-                    'segment_uid': segment_uid, 'file_uid': file_uid,
-                    'sc_uid': sc_uid, 'type': type_name, 
-                    'author_alias': author_alias, 'lang': lang, 
+                    'sc_uid': sc_uid, 
+                    'segment': segment_num,
+                    'type': type_name, 
+                    'lang': lang, 
+                    'author_alias': author_alias, 
                     'content': content
                 })
             return segments
@@ -58,7 +68,6 @@ class BilaraSegmentProcessor:
             return []
 
     def process(self) -> List[Dict[str, Any]]:
-        # ... (Hàm này giữ nguyên không thay đổi) ...
         if not self.manifest_path.exists():
             logger.error(f"File manifest Bilara không tồn tại: {self.manifest_path}")
             return []
@@ -70,6 +79,7 @@ class BilaraSegmentProcessor:
         except json.JSONDecodeError as e:
             logger.error(f"Lỗi khi đọc file manifest JSON: {e}")
             return []
+
         for type_name, group_dict in manifest_data.items():
             if not isinstance(group_dict, dict):
                 continue
@@ -79,7 +89,9 @@ class BilaraSegmentProcessor:
                 if not full_file_path.exists():
                     logger.warning(f"File được định nghĩa trong manifest không tồn tại: {full_file_path}")
                     continue
+                # Truyền file_uid vào _parse_file dù không còn dùng trong bảng
                 segments_from_file = self._parse_file(full_file_path, relative_path_str, type_name, file_uid)
                 all_segments.extend(segments_from_file)
+        
         logger.info(f"✅ Đã xử lý {self.manifest_path.name}, tìm thấy tổng cộng {len(all_segments)} segment.")
         return all_segments
