@@ -2,6 +2,7 @@ import logging
 import subprocess
 import configparser
 from pathlib import Path
+from src.config import constants
 
 from src.db_updater.post_processors import (
     bilara_processor, 
@@ -51,15 +52,15 @@ def _run_command(command: list[str], cwd: Path):
     return True
 
 
-# --- HÀM ĐÃ ĐƯỢC CẬP NHẬT ---
 def process_git_submodules(
-    handler_config: dict, # THAY ĐỔI 1: Nhận vào dict thay vì list
-    project_root: Path, 
+    handler_config: dict,
     base_dir: Path,
     run_update: bool = True,
     run_post_process: bool = True,
     tasks_to_run: list[str] | None = None
 ):
+    # LẤY project_root TỪ CONSTANTS
+    project_root = constants.PROJECT_ROOT
     # --- Giai đoạn 1: Cập nhật submodules ---
     if run_update:
         log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU GIT SUBMODULE ===")
