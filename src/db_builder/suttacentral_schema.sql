@@ -90,9 +90,12 @@ CREATE TABLE IF NOT EXISTS "Segments" (
 );
 
 -- Index để tăng tốc độ truy vấn theo sc_uid
-CREATE INDEX IF NOT EXISTS "idx_segments_on_sc_uid"  -- << ĐỔI TÊN INDEX
-ON "Segments" ("sc_uid");                            -- << CẬP NHẬT CỘT
+CREATE INDEX IF NOT EXISTS "idx_segments_on_sc_uid" 
+ON "Segments" ("sc_uid");                          
 
 -- Index tổng hợp để tối ưu cho các truy vấn phức tạp hơn
 CREATE INDEX IF NOT EXISTS "idx_segments_sutta_compound" 
-ON "Segments" ("sc_uid", "type", "lang", "author_alias"); -- << CẬP NHẬT CỘT
+ON "Segments" ("sc_uid", "type", "lang", "author_alias");
+
+CREATE INDEX IF NOT EXISTS "idx_segments_type_segment" 
+ON "Segments" ("sc_uid", "type", "segment", "lang", "author_alias");
