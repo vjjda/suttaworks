@@ -22,16 +22,14 @@ def get_available_tasks(config: dict, module_name: str) -> list[str]:
     tasks = []
     module_config = config.get(module_name, {})
     
-    # --- THAY ĐỔI LOGIC CHO GIT-SUBMODULE ---
-    if 'git-submodule' in module_config:
-        # Giờ đây 'post' là một key trực tiếp, giống hệt 'api'
-        submodule_config = module_config['git-submodule']
-        if 'post' in submodule_config and isinstance(submodule_config['post'], dict):
-            tasks.extend(submodule_config['post'].keys())
-    elif 'api' in module_config:
-        api_config = module_config['api']
-        if 'post' in api_config and isinstance(api_config['post'], dict):
-            tasks.extend(api_config['post'].keys())
+    # Tìm key handler chính (ví dụ: 'git-submodule', 'api', 'google-drive')
+    if not module_config: return []
+    handler_type = list(module_config.keys())[0]
+    handler_config = module_config[handler_type]
+    
+    # Logic chung để lấy 'post' tasks
+    if 'post' in handler_config and isinstance(handler_config['post'], dict):
+        tasks.extend(handler_config['post'].keys())
     
     return list(dict.fromkeys(tasks))
 
@@ -108,6 +106,24 @@ def main():
             run_post_process=run_post_process,
             tasks_to_run=tasks_to_run
         )
+    # --- THÊM KHỐI MÃ NÀY ---
+    elif module_type == "google-drive":
+        gdrive_handler.process_gdrive_data(
+            handler_config,
+            destination_dir,
+            run_update=run_update,
+            run_post_process=run_post_process,
+            tasks_to_run=tasks_to_run
+        )
+    elif module_type == "git-release":
+        git_release_handler.process_git_release_data(
+            handler_config,
+            destination_dir, # base_dest_dir
+            run_update=run_update,
+            run_post_process=run_post_process,
+            tasks_to_run=tasks_to_run
+        )
+    # --- KẾT THÚC KHỐI MÃ MỚI ---
     else:
         log.warning(f"Chưa hỗ trợ logic chạy tùy chỉnh cho handler '{module_type}'.")
 
