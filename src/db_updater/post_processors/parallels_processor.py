@@ -82,7 +82,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
         if replacements:
             log.info(f"Thực hiện {len(replacements)} thay thế văn bản từ config...")
             for find, replace in replacements:
-                raw_content = raw_content.replace(f'"{find}"', f'"{replace}"')
+                raw_content = raw_content.replace(find, replace)
         
         data = json.loads(raw_content)
 
