@@ -25,7 +25,9 @@ suttacentral-sqlite:
   bilara-segment:
     folder: "data/raw/git/suttacentral-data"
     json: 
-      - Segments_bilara: "data/raw/git/post_processed/bilara/sc_bilara.json"
-      - Segments_site: "data/raw/git/post_processed/bilara/sc_site.json"
+      - Bilara_names: "data/raw/git/post_processed/bilara/sc_names.json"
+      - Bilara_blurbs: "data/raw/git/post_processed/bilara/sc_blurbs.json"
+      - Bilara_sites: "data/raw/git/post_processed/bilara/sc_sites.json"
+      - Bilara_segments: "data/raw/git/post_processed/bilara/sc_bilara_segments.json"
     author-remap:
       sutta: null

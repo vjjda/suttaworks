@@ -62,18 +62,55 @@ class DatabaseManager:
                 self.conn.close()
                 logger.info("Đã đóng kết nối database.")
 
-    def create_tables_from_schema(self):
-        """Đọc file schema và thực thi để tạo tất cả các bảng."""
-        schema_path = PROJECT_ROOT / "src" / "db_builder" / "suttacentral_schema.sql"
+    def create_tables_from_schema(self, schema_path: Path):
+        """
+        Đọc một file schema được chỉ định và thực thi để tạo các bảng.
         
+        Args:
+            schema_path: Đường dẫn đến file .sql chứa schema.
+        """
+        if not schema_path.exists():
+            logger.error(f"File schema không tồn tại: {schema_path}")
+            raise FileNotFoundError(f"File schema không tồn tại: {schema_path}")
+
         logger.info(f"Đang đọc schema từ: {schema_path}")
         try:
             with open(schema_path, 'r', encoding='utf-8') as f:
                 schema_sql = f.read()
             self.conn.executescript(schema_sql)
-            logger.info("✅ Đã tạo tất cả các bảng từ file schema thành công.")
+            logger.info(f"✅ Đã tạo tất cả các bảng từ file schema '{schema_path.name}' thành công.")
         except sqlite3.Error as e:
-            logger.error(f"Lỗi khi thực thi file schema: {e}")
+            logger.error(f"Lỗi khi thực thi file schema '{schema_path.name}': {e}")
+            raise
+    
+    def create_tables_from_template(self, template_path: Path, table_names: list[str]):
+        """
+        Đọc một file schema template và tạo nhiều bảng từ đó.
+        
+        Args:
+            template_path: Đường dẫn đến file .sql chứa template.
+            table_names: Danh sách tên các bảng cần tạo.
+        """
+        if not template_path.exists():
+            logger.error(f"File schema template không tồn tại: {template_path}")
+            raise FileNotFoundError(f"File schema template không tồn tại: {template_path}")
+
+        try:
+            logger.info(f"Đang đọc schema template từ: {template_path}")
+            with open(template_path, 'r', encoding='utf-8') as f:
+                template_sql = f.read()
+
+            for name in table_names:
+                # Thay thế placeholder bằng tên bảng thật
+                final_sql = template_sql.format(table_name=name)
+                
+                # Thực thi script để tạo bảng và các index
+                self.conn.executescript(final_sql)
+            
+            logger.info(f"✅ Đã tạo các bảng từ template thành công.")
+            
+        except Exception as e:
+            logger.error(f"Lỗi khi tạo bảng từ template: {e}", exc_info=True)
             raise
 
     def insert_data(self, table_name: str, data: List[Dict[str, Any]]):
