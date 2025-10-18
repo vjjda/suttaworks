@@ -8,11 +8,11 @@ git:
       cips-json:
         path: data/raw/git/cips/src/data/general-index.csv
         output: 
-          - topic-index: data/raw/git/cips_topic.json
-          - sutta-index: data/raw/git/cips_sutta.json
+          - topic-index: data/raw/git/post_processed/cips_topic.json
+          - sutta-index: data/raw/git/post_processed/cips_sutta.json
       html_text:
         path: data/raw/git/suttacentral-data/html_text
-        output: data/raw/git/sc_html_text_authors.json
+        output: data/raw/git/post_processed/parallels/sc_html_text_authors.json
         ignore: [zz]
       bilara:
         path: data/raw/git/suttacentral-data/sc_bilara_data
@@ -31,10 +31,10 @@ git:
         replacements:
           - ['"mn75.1"', '"mn75#1"']
         output:
-          category: data/raw/git/sc_parallel_category.json
-          segment: data/raw/git/sc_parallel_segment.json
-          flat_segment: data/raw/git/sc_parallel_flat_segment.json
-          book: data/raw/git/sc_parallel_book.json
+          category: data/raw/git/post_processed/parallels/sc_parallel_category.json
+          segment: data/raw/git/post_processed/parallels/sc_parallel_segment.json
+          flat_segment: data/raw/git/post_processed/parallels/sc_parallel_flat_segment.json
+          book: data/raw/git/post_processed/parallels/sc_parallel_book.json
 release:
   git-release:
     dpd:
