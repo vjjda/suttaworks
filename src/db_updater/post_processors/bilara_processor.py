@@ -2,7 +2,7 @@
 import logging
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 log = logging.getLogger(__name__)
 
@@ -12,8 +12,6 @@ def _write_json_output(output_path: Path, data: Dict[str, Any], data_name: str):
     Hàm phụ trợ để ghi một dictionary ra file JSON,
     loại bỏ các category rỗng trước khi ghi.
     """
-    # --- THAY ĐỔI: Lọc bỏ các category không có file nào ---
-    # Chỉ giữ lại các cặp (key, value) mà value (dictionary con) không rỗng.
     cleaned_data = {folder: files for folder, files in data.items() if files}
 
     if cleaned_data:
@@ -22,7 +20,6 @@ def _write_json_output(output_path: Path, data: Dict[str, Any], data_name: str):
         output_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
-                # Ghi dữ liệu đã được làm sạch
                 json.dump(cleaned_data, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã tạo file tổng hợp Bilara ({data_name}) thành công.")
         except IOError as e:
@@ -33,18 +30,14 @@ def _write_json_output(output_path: Path, data: Dict[str, Any], data_name: str):
 
 def process_bilara_data(config: Dict, project_root: Path):
     """
-    Quét các thư mục con trong kho dữ liệu bilara,
-    phân loại các file vào nhóm 'site' hoặc 'sutta' dựa trên đường dẫn,
-    và lưu vào hai file JSON riêng biệt.
+    Quét dữ liệu bilara, phân loại file vào các nhóm dựa trên một danh sách
+    ưu tiên được định nghĩa trong config, và lưu vào các file JSON riêng biệt.
     """
     try:
         base_path = project_root / config['path']
         folders_to_scan = config['folders']
         output_config = config['output']
-        site_keywords = set(config.get('site', [])) # Dùng set để tra cứu nhanh hơn
-        
-        sutta_output_file = project_root / output_config['sutta']
-        site_output_file = project_root / output_config['site']
+        groups_config = config.get('groups', [])
 
     except KeyError as e:
         log.error(f"Thiếu key bắt buộc trong cấu hình 'bilara': {e}")
@@ -52,9 +45,14 @@ def process_bilara_data(config: Dict, project_root: Path):
 
     log.info(f"Bắt đầu quét dữ liệu Bilara từ: {base_path}")
     
-    # --- THAY ĐỔI: Tạo hai map riêng biệt ---
-    sutta_map = {folder: {} for folder in folders_to_scan}
-    site_map = {folder: {} for folder in folders_to_scan}
+    # --- THAY ĐỔI: Khởi tạo các map output một cách động ---
+    output_maps = {}
+    # Thêm map mặc định 'sutta'
+    output_maps['sutta'] = {folder: {} for folder in folders_to_scan}
+    # Thêm các map được định nghĩa trong groups
+    for group in groups_config:
+        group_name = list(group.keys())[0]
+        output_maps[group_name] = {folder: {} for folder in folders_to_scan}
     
     relative_base = base_path.parent.parent
 
@@ -68,19 +66,30 @@ def process_bilara_data(config: Dict, project_root: Path):
         for json_file in scan_dir.glob('**/*.json'):
             file_key = json_file.stem
             relative_path = json_file.relative_to(relative_base)
-            
-            # --- THAY ĐỔI: Logic phân luồng (routing) ---
-            # Lấy các phần của đường dẫn (ví dụ: ['sc_bilara_data', 'site', ...])
             path_parts = set(relative_path.parts)
             
-            # Kiểm tra xem có phần nào của đường dẫn nằm trong danh sách site_keywords không
-            if not path_parts.isdisjoint(site_keywords):
-                # Nếu có, đây là file thuộc nhóm 'site'
-                site_map[folder][file_key] = str(relative_path)
-            else:
-                # Nếu không, đây là file thuộc nhóm 'sutta'
-                sutta_map[folder][file_key] = str(relative_path)
+            # --- THAY ĐỔI: Logic phân luồng ưu tiên mới ---
+            matched = False
+            # Duyệt qua các group theo đúng thứ tự ưu tiên trong config
+            for group in groups_config:
+                group_name = list(group.keys())[0]
+                keywords = set(list(group.values())[0])
+                
+                # Nếu tìm thấy sự trùng khớp
+                if not path_parts.isdisjoint(keywords):
+                    # Phân file vào map tương ứng
+                    output_maps[group_name][folder][file_key] = str(relative_path)
+                    matched = True
+                    # Dừng việc kiểm tra ngay lập tức vì đã tìm thấy group ưu tiên cao nhất
+                    break
+            
+            # Nếu không khớp với bất kỳ group nào, đưa vào nhóm 'sutta' mặc định
+            if not matched:
+                output_maps['sutta'][folder][file_key] = str(relative_path)
 
-    # --- THAY ĐỔI: Ghi cả hai file output ---
-    _write_json_output(sutta_output_file, sutta_map, "Sutta")
-    _write_json_output(site_output_file, site_map, "Site")
+    # --- THAY ĐỔI: Ghi tất cả các file output đã được cấu hình ---
+    for group_name, data_map in output_maps.items():
+        # Chỉ ghi file nếu có cấu hình output cho group đó
+        if group_name in output_config:
+            output_file = project_root / output_config[group_name]
+            _write_json_output(output_file, data_map, group_name.capitalize())

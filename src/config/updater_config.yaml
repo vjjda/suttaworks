@@ -17,10 +17,15 @@ git:
       bilara:
         path: data/raw/git/suttacentral-data/sc_bilara_data
         folders: [root, html, reference, variant, translation, comment]
-        site: [site, name, blurb]
+        groups:
+          - name: [name]
+          - blurb: [blurb]
+          - site: [site]
         output: 
-          site: data/raw/git/sc_site.json
-          sutta: data/raw/git/sc_bilara.json
+          site: data/raw/git/bilara/sc_site.json
+          blurb: data/raw/git/bilara/sc_blurbs.json
+          name: data/raw/git/bilara/sc_names.json
+          sutta: data/raw/git/bilara/sc_bilara.json
       parallels:
         path: data/raw/git/suttacentral-data/relationship/parallels.json
         replacements:
