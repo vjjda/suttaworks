@@ -14,6 +14,12 @@ def _natural_sort_key(s: str) -> list:
     return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
 
 
+def _get_book_id(base_id: str) -> str:
+    """Trích xuất ID 'sách' từ base_id (phần chữ trước số đầu tiên)."""
+    book_id = re.split('([0-9])', base_id, 1)[0]
+    return book_id.rstrip()
+
+
 def _sort_category_map(sutta_map: defaultdict) -> dict:
     """Sắp xếp map theo cấu trúc Category: base_id -> rel_type -> full_id."""
     relation_order = ["parallels", "resembles", "mentions", "retells"]
@@ -113,6 +119,27 @@ def _sort_flat_segment_map(flat_map: dict) -> dict:
     return final_sorted_map
 
 
+def _create_book_structure(segment_data: dict) -> defaultdict:
+    """Nhóm lại map Segment theo book_id."""
+    book_map = defaultdict(dict)
+    for base_id, segments in segment_data.items():
+        book_id = _get_book_id(base_id)
+        book_map[book_id][base_id] = segments
+    return book_map
+
+
+def _sort_book_map(book_map: defaultdict) -> dict:
+    """Sắp xếp map theo cấu trúc Book."""
+    final_sorted_map = {}
+    for book_id in sorted(book_map.keys(), key=_natural_sort_key):
+        base_id_map = book_map[book_id]
+        sorted_base_id_map = {}
+        for base_id in sorted(base_id_map.keys(), key=_natural_sort_key):
+            sorted_base_id_map[base_id] = base_id_map[base_id]
+        final_sorted_map[book_id] = sorted_base_id_map
+    return final_sorted_map
+
+
 def _parse_sutta_id(full_id: str) -> str:
     """Tách mã kinh gốc ra khỏi mã định danh đầy đủ."""
     cleaned_id = full_id.lstrip('~')
@@ -122,22 +149,22 @@ def _parse_sutta_id(full_id: str) -> str:
 def process_parallels_data(task_config: dict, project_root: Path):
     """
     Đọc file parallels.json gốc, xử lý và tạo ra các file kết quả theo cấu hình.
-    Hỗ trợ output dạng category, segment, và flat_segment.
+    Hỗ trợ output dạng category, segment, flat_segment, và book.
     """
     try:
         input_path = project_root / task_config['path']
         output_config = task_config['output']
 
-        category_output_path, segment_output_path, flat_segment_output_path = None, None, None
+        category_output_path, segment_output_path, flat_segment_output_path, book_output_path = None, None, None, None
         if isinstance(output_config, str):
             category_output_path = project_root / output_config
         elif isinstance(output_config, dict):
-            # Lấy đường dẫn an toàn, nếu key không tồn tại sẽ trả về None
             category_output_path = project_root / output_config['category'] if 'category' in output_config else None
             segment_output_path = project_root / output_config['segment'] if 'segment' in output_config else None
             flat_segment_output_path = project_root / output_config['flat_segment'] if 'flat_segment' in output_config else None
+            book_output_path = project_root / output_config['book'] if 'book' in output_config else None
         
-        if not any([category_output_path, segment_output_path, flat_segment_output_path]):
+        if not any([category_output_path, segment_output_path, flat_segment_output_path, book_output_path]):
             log.error("Lỗi cấu hình 'parallels': không có đường dẫn output hợp lệ.")
             return
 
@@ -146,11 +173,18 @@ def process_parallels_data(task_config: dict, project_root: Path):
             log.error(f"Không tìm thấy file input: {input_path}")
             return
 
+        # --- THAY ĐỔI: Thêm bước tiền xử lý để sửa lỗi dữ liệu nguồn ---
         with open(input_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            log.debug("Tiền xử lý: Sửa lỗi 'mn75.1' -> 'mn75#1'...")
+            # Đọc toàn bộ file dưới dạng chuỗi
+            raw_content = f.read()
+            # Thực hiện thay thế chuỗi. Thêm dấu " để đảm bảo chỉ thay thế đúng chuỗi ID
+            corrected_content = raw_content.replace('"mn75.1"', '"mn75#1"')
+            # Parse chuỗi đã được sửa thành đối tượng JSON
+            data = json.loads(corrected_content)
 
         sutta_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-        # ... (logic xử lý for group in data... không thay đổi)
+        
         for group in data:
             relation_type = list(group.keys())[0]
             id_list = group[relation_type]
@@ -193,8 +227,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
                             sutta_map[base_source_full][relation_type][source_full].append(cleaned_target)
                             sutta_map[base_target_resembling][relation_type][cleaned_target].append(source_full)
         
-        # Luôn xử lý và lưu trữ các phiên bản để tái sử dụng
-        category_data, segment_data, flat_segment_data = None, None, None
+        category_data, segment_data = None, None
 
         if category_output_path:
             category_data = _sort_category_map(sutta_map)
@@ -203,7 +236,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
                 json.dump(category_data, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã lưu file Category vào: {category_output_path}")
 
-        if segment_output_path or flat_segment_output_path:
+        if any([segment_output_path, flat_segment_output_path, book_output_path]):
             segment_map = _invert_to_segment_structure(sutta_map)
             segment_data = _sort_segment_map(segment_map)
             if segment_output_path:
@@ -213,17 +246,26 @@ def process_parallels_data(task_config: dict, project_root: Path):
                 log.info(f"✅ Đã lưu file Segment vào: {segment_output_path}")
         
         if flat_segment_output_path:
-            # Tái sử dụng segment_data đã được tạo nếu có
             if not segment_data:
                 segment_map = _invert_to_segment_structure(sutta_map)
                 segment_data = _sort_segment_map(segment_map)
-
             flat_map = _flatten_segment_map(segment_data)
             flat_segment_data = _sort_flat_segment_map(flat_map)
             flat_segment_output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(flat_segment_output_path, 'w', encoding='utf-8') as f:
                 json.dump(flat_segment_data, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã lưu file Flat Segment vào: {flat_segment_output_path}")
+        
+        if book_output_path:
+            if not segment_data:
+                segment_map = _invert_to_segment_structure(sutta_map)
+                segment_data = _sort_segment_map(segment_map)
+            book_map = _create_book_structure(segment_data)
+            book_data = _sort_book_map(book_map)
+            book_output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(book_output_path, 'w', encoding='utf-8') as f:
+                json.dump(book_data, f, ensure_ascii=False, indent=2)
+            log.info(f"✅ Đã lưu file Book vào: {book_output_path}")
 
     except KeyError as e:
         log.error(f"Lỗi cấu hình cho tác vụ 'parallels': thiếu key '{e}'")

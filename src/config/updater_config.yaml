@@ -20,6 +20,7 @@ git:
         output: data/raw/git/sc_bilara.json
       parallels:
         path: data/raw/git/suttacentral-data/relationship/parallels.json
+        replacements:
         output:
           category: data/raw/git/sc_parallel_category.json
           segment: data/raw/git/sc_parallel_segment.json
