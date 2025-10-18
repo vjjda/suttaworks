@@ -1,170 +1,73 @@
 # Path: src/db_updater/post_processors/parallels_processor.py
 import json
 import logging
-import re
 from pathlib import Path
 from itertools import combinations
 from collections import defaultdict
 
+# Import các module đã được chia nhỏ
+from .parallels import sorter, transformer, utils
+
 log = logging.getLogger(__name__)
 
-
-def _natural_sort_key(s: str) -> list:
-    """Tạo một sort key để sắp xếp chuỗi theo thứ tự tự nhiên."""
-    return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
-
-
-def _get_book_id(base_id: str) -> str:
-    """Trích xuất ID 'sách' từ base_id (phần chữ trước số đầu tiên)."""
-    book_id = re.split('([0-9])', base_id, 1)[0]
-    return book_id.rstrip()
-
-
-def _sort_category_map(sutta_map: defaultdict) -> dict:
-    """Sắp xếp map theo cấu trúc Category: base_id -> rel_type -> full_id."""
-    relation_order = ["parallels", "resembles", "mentions", "retells"]
-    final_sorted_map = {}
-
-    for base_id in sorted(sutta_map.keys(), key=_natural_sort_key):
-        relations = sutta_map[base_id]
-        sorted_relations = {}
-
-        def get_relation_sort_key(relation_type):
-            try: return relation_order.index(relation_type)
-            except ValueError: return len(relation_order)
-
-        for rel_type in sorted(relations.keys(), key=get_relation_sort_key):
-            full_id_map = relations[rel_type]
-            sorted_full_id_map = {}
-
-            for full_id in sorted(full_id_map.keys(), key=_natural_sort_key):
-                parallel_list = full_id_map[full_id]
-                unique_sorted_list = sorted(list(dict.fromkeys(parallel_list)), key=_natural_sort_key)
-                if unique_sorted_list:
-                    sorted_full_id_map[full_id] = unique_sorted_list
-            if sorted_full_id_map:
-                sorted_relations[rel_type] = sorted_full_id_map
-        if sorted_relations:
-            final_sorted_map[base_id] = sorted_relations
-    return final_sorted_map
-
-
-def _invert_to_segment_structure(category_map: dict) -> defaultdict:
-    """Chuyển đổi map từ view Category sang view Segment."""
-    segment_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    for base_id, relations in category_map.items():
-        for rel_type, full_id_map in relations.items():
-            for full_id, parallel_list in full_id_map.items():
-                segment_map[base_id][full_id][rel_type].extend(parallel_list)
-    return segment_map
-
-
-def _sort_segment_map(segment_map: defaultdict) -> dict:
-    """Sắp xếp map theo cấu trúc Segment: base_id -> full_id -> rel_type."""
-    relation_order = ["parallels", "resembles", "mentions", "retells"]
-    final_sorted_map = {}
-
-    for base_id in sorted(segment_map.keys(), key=_natural_sort_key):
-        segments = segment_map[base_id]
-        sorted_segments = {}
-
-        for full_id in sorted(segments.keys(), key=_natural_sort_key):
-            relations = segments[full_id]
-            sorted_relations = {}
-
-            def get_relation_sort_key(relation_type):
-                try: return relation_order.index(relation_type)
-                except ValueError: return len(relation_order)
-
-            for rel_type in sorted(relations.keys(), key=get_relation_sort_key):
-                parallel_list = relations[rel_type]
-                unique_sorted_list = sorted(list(dict.fromkeys(parallel_list)), key=_natural_sort_key)
-                if unique_sorted_list:
-                    sorted_relations[rel_type] = unique_sorted_list
-            if sorted_relations:
-                sorted_segments[full_id] = sorted_relations
-        if sorted_segments:
-            final_sorted_map[base_id] = sorted_segments
-    return final_sorted_map
-
-
-def _flatten_segment_map(segment_data: dict) -> dict:
-    """Làm phẳng map Segment, dùng segment_id làm key chính."""
-    flat_map = {}
-    for base_id, segments in segment_data.items():
-        flat_map.update(segments)
-    return flat_map
-
-
-def _sort_flat_segment_map(flat_map: dict) -> dict:
-    """Sắp xếp map flat_segment."""
-    relation_order = ["parallels", "resembles", "mentions", "retells"]
-    final_sorted_map = {}
+def _build_initial_map(data: list) -> defaultdict:
+    """Xây dựng map ban đầu từ dữ liệu gốc (luôn theo cấu trúc Category)."""
+    sutta_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     
-    for full_id in sorted(flat_map.keys(), key=_natural_sort_key):
-        relations = flat_map[full_id]
-        sorted_relations = {}
+    for group in data:
+        relation_type = list(group.keys())[0]
+        id_list = group[relation_type]
 
-        def get_relation_sort_key(relation_type):
-            try: return relation_order.index(relation_type)
-            except ValueError: return len(relation_order)
+        full_list = [i for i in id_list if not i.startswith('~')]
+        resembling_list = [i for i in id_list if i.startswith('~')]
 
-        for rel_type in sorted(relations.keys(), key=get_relation_sort_key):
-            parallel_list = relations[rel_type]
-            unique_sorted_list = sorted(list(dict.fromkeys(parallel_list)), key=_natural_sort_key)
-            if unique_sorted_list:
-                sorted_relations[rel_type] = unique_sorted_list
-        if sorted_relations:
-            final_sorted_map[full_id] = sorted_relations
-    return final_sorted_map
-
-
-def _create_book_structure(segment_data: dict) -> defaultdict:
-    """Nhóm lại map Segment theo book_id."""
-    book_map = defaultdict(dict)
-    for base_id, segments in segment_data.items():
-        book_id = _get_book_id(base_id)
-        book_map[book_id][base_id] = segments
-    return book_map
-
-
-def _sort_book_map(book_map: defaultdict) -> dict:
-    """Sắp xếp map theo cấu trúc Book."""
-    final_sorted_map = {}
-    for book_id in sorted(book_map.keys(), key=_natural_sort_key):
-        base_id_map = book_map[book_id]
-        sorted_base_id_map = {}
-        for base_id in sorted(base_id_map.keys(), key=_natural_sort_key):
-            sorted_base_id_map[base_id] = base_id_map[base_id]
-        final_sorted_map[book_id] = sorted_base_id_map
-    return final_sorted_map
-
-
-def _parse_sutta_id(full_id: str) -> str:
-    """Tách mã kinh gốc ra khỏi mã định danh đầy đủ."""
-    cleaned_id = full_id.lstrip('~')
-    return cleaned_id.split('#')[0]
-
+        if relation_type == "parallels":
+            for source, target in combinations(full_list, 2):
+                base_s = utils.parse_sutta_id(source)
+                base_t = utils.parse_sutta_id(target)
+                sutta_map[base_s]['parallels'][source].append(target)
+                sutta_map[base_t]['parallels'][target].append(source)
+            if full_list and resembling_list:
+                for source in full_list:
+                    base_s = utils.parse_sutta_id(source)
+                    for target in resembling_list:
+                        cleaned_t = target.lstrip('~')
+                        base_t = utils.parse_sutta_id(cleaned_t)
+                        sutta_map[base_s]['resembles'][source].append(cleaned_t)
+                        sutta_map[base_t]['resembles'][cleaned_t].append(source)
+        elif relation_type in ["mentions", "retells"]:
+            for source, target in combinations(full_list, 2):
+                base_s = utils.parse_sutta_id(source)
+                base_t = utils.parse_sutta_id(target)
+                sutta_map[base_s][relation_type][source].append(target)
+                sutta_map[base_t][relation_type][target].append(source)
+            if full_list and resembling_list:
+                for source in full_list:
+                    base_s = utils.parse_sutta_id(source)
+                    for target in resembling_list:
+                        cleaned_t = target.lstrip('~')
+                        base_t = utils.parse_sutta_id(cleaned_t)
+                        sutta_map[base_s][relation_type][source].append(cleaned_t)
+                        sutta_map[base_t][relation_type][cleaned_t].append(source)
+    return sutta_map
 
 def process_parallels_data(task_config: dict, project_root: Path):
     """
-    Đọc file parallels.json gốc, xử lý và tạo ra các file kết quả theo cấu hình.
-    Hỗ trợ output dạng category, segment, flat_segment, và book.
+    Điều phối việc đọc, xử lý và tạo các file parallels output theo cấu hình.
     """
     try:
         input_path = project_root / task_config['path']
-        output_config = task_config['output']
+        output_config = task_config.get('output', {})
+        replacements = task_config.get('replacements', [])
 
-        category_output_path, segment_output_path, flat_segment_output_path, book_output_path = None, None, None, None
-        if isinstance(output_config, str):
-            category_output_path = project_root / output_config
-        elif isinstance(output_config, dict):
-            category_output_path = project_root / output_config['category'] if 'category' in output_config else None
-            segment_output_path = project_root / output_config['segment'] if 'segment' in output_config else None
-            flat_segment_output_path = project_root / output_config['flat_segment'] if 'flat_segment' in output_config else None
-            book_output_path = project_root / output_config['book'] if 'book' in output_config else None
+        paths = {
+            'category': project_root / output_config['category'] if 'category' in output_config else None,
+            'segment': project_root / output_config['segment'] if 'segment' in output_config else None,
+            'flat': project_root / output_config['flat_segment'] if 'flat_segment' in output_config else None,
+            'book': project_root / output_config['book'] if 'book' in output_config else None,
+        }
         
-        if not any([category_output_path, segment_output_path, flat_segment_output_path, book_output_path]):
+        if not any(paths.values()):
             log.error("Lỗi cấu hình 'parallels': không có đường dẫn output hợp lệ.")
             return
 
@@ -173,101 +76,52 @@ def process_parallels_data(task_config: dict, project_root: Path):
             log.error(f"Không tìm thấy file input: {input_path}")
             return
 
-        # --- THAY ĐỔI: Thêm bước tiền xử lý để sửa lỗi dữ liệu nguồn ---
         with open(input_path, 'r', encoding='utf-8') as f:
-            log.debug("Tiền xử lý: Sửa lỗi 'mn75.1' -> 'mn75#1'...")
-            # Đọc toàn bộ file dưới dạng chuỗi
             raw_content = f.read()
-            # Thực hiện thay thế chuỗi. Thêm dấu " để đảm bảo chỉ thay thế đúng chuỗi ID
-            corrected_content = raw_content.replace('"mn75.1"', '"mn75#1"')
-            # Parse chuỗi đã được sửa thành đối tượng JSON
-            data = json.loads(corrected_content)
-
-        sutta_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         
-        for group in data:
-            relation_type = list(group.keys())[0]
-            id_list = group[relation_type]
-
-            if relation_type == "parallels":
-                full_list = [i for i in id_list if not i.startswith('~')]
-                resembling_list = [i for i in id_list if i.startswith('~')]
-
-                for source_id, target_id in combinations(full_list, 2):
-                    base_source = _parse_sutta_id(source_id)
-                    base_target = _parse_sutta_id(target_id)
-                    sutta_map[base_source]['parallels'][source_id].append(target_id)
-                    sutta_map[base_target]['parallels'][target_id].append(source_id)
-
-                if full_list and resembling_list:
-                    for source_full in full_list:
-                        base_source_full = _parse_sutta_id(source_full)
-                        for target_resembling in resembling_list:
-                            cleaned_target = target_resembling.lstrip('~')
-                            base_target_resembling = _parse_sutta_id(cleaned_target)
-                            sutta_map[base_source_full]['resembles'][source_full].append(cleaned_target)
-                            sutta_map[base_target_resembling]['resembles'][cleaned_target].append(source_full)
-
-            elif relation_type in ["mentions", "retells"]:
-                full_list = [i for i in id_list if not i.startswith('~')]
-                resembling_list = [i for i in id_list if i.startswith('~')]
-
-                for source_id, target_id in combinations(full_list, 2):
-                    base_source = _parse_sutta_id(source_id)
-                    base_target = _parse_sutta_id(target_id)
-                    sutta_map[base_source][relation_type][source_id].append(target_id)
-                    sutta_map[base_target][relation_type][target_id].append(source_id)
-
-                if full_list and resembling_list:
-                    for source_full in full_list:
-                        base_source_full = _parse_sutta_id(source_full)
-                        for target_resembling in resembling_list:
-                            cleaned_target = target_resembling.lstrip('~')
-                            base_target_resembling = _parse_sutta_id(cleaned_target)
-                            sutta_map[base_source_full][relation_type][source_full].append(cleaned_target)
-                            sutta_map[base_target_resembling][relation_type][cleaned_target].append(source_full)
+        if replacements:
+            log.info(f"Thực hiện {len(replacements)} thay thế văn bản từ config...")
+            for find, replace in replacements:
+                raw_content = raw_content.replace(f'"{find}"', f'"{replace}"')
         
+        data = json.loads(raw_content)
+
+        sutta_map = _build_initial_map(data)
+        
+        # Tạo các phiên bản dữ liệu một cách hiệu quả
         category_data, segment_data = None, None
 
-        if category_output_path:
-            category_data = _sort_category_map(sutta_map)
-            category_output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(category_output_path, 'w', encoding='utf-8') as f:
+        if paths['category']:
+            category_data = sorter.sort_category_map(sutta_map)
+            paths['category'].parent.mkdir(parents=True, exist_ok=True)
+            with open(paths['category'], 'w', encoding='utf-8') as f:
                 json.dump(category_data, f, ensure_ascii=False, indent=2)
-            log.info(f"✅ Đã lưu file Category vào: {category_output_path}")
+            log.info(f"✅ Đã lưu file Category vào: {paths['category']}")
 
-        if any([segment_output_path, flat_segment_output_path, book_output_path]):
-            segment_map = _invert_to_segment_structure(sutta_map)
-            segment_data = _sort_segment_map(segment_map)
-            if segment_output_path:
-                segment_output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(segment_output_path, 'w', encoding='utf-8') as f:
+        if any([paths['segment'], paths['flat'], paths['book']]):
+            segment_map = transformer.invert_to_segment_structure(sutta_map)
+            segment_data = sorter.sort_segment_map(segment_map)
+            if paths['segment']:
+                paths['segment'].parent.mkdir(parents=True, exist_ok=True)
+                with open(paths['segment'], 'w', encoding='utf-8') as f:
                     json.dump(segment_data, f, ensure_ascii=False, indent=2)
-                log.info(f"✅ Đã lưu file Segment vào: {segment_output_path}")
+                log.info(f"✅ Đã lưu file Segment vào: {paths['segment']}")
         
-        if flat_segment_output_path:
-            if not segment_data:
-                segment_map = _invert_to_segment_structure(sutta_map)
-                segment_data = _sort_segment_map(segment_map)
-            flat_map = _flatten_segment_map(segment_data)
-            flat_segment_data = _sort_flat_segment_map(flat_map)
-            flat_segment_output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(flat_segment_output_path, 'w', encoding='utf-8') as f:
-                json.dump(flat_segment_data, f, ensure_ascii=False, indent=2)
-            log.info(f"✅ Đã lưu file Flat Segment vào: {flat_segment_output_path}")
+        if paths['flat']:
+            flat_map = transformer.flatten_segment_map(segment_data)
+            flat_data = sorter.sort_flat_segment_map(flat_map)
+            paths['flat'].parent.mkdir(parents=True, exist_ok=True)
+            with open(paths['flat'], 'w', encoding='utf-8') as f:
+                json.dump(flat_data, f, ensure_ascii=False, indent=2)
+            log.info(f"✅ Đã lưu file Flat Segment vào: {paths['flat']}")
         
-        if book_output_path:
-            if not segment_data:
-                segment_map = _invert_to_segment_structure(sutta_map)
-                segment_data = _sort_segment_map(segment_map)
-            book_map = _create_book_structure(segment_data)
-            book_data = _sort_book_map(book_map)
-            book_output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(book_output_path, 'w', encoding='utf-8') as f:
+        if paths['book']:
+            book_map = transformer.create_book_structure(segment_data)
+            book_data = sorter.sort_book_map(book_map)
+            paths['book'].parent.mkdir(parents=True, exist_ok=True)
+            with open(paths['book'], 'w', encoding='utf-8') as f:
                 json.dump(book_data, f, ensure_ascii=False, indent=2)
-            log.info(f"✅ Đã lưu file Book vào: {book_output_path}")
+            log.info(f"✅ Đã lưu file Book vào: {paths['book']}")
 
-    except KeyError as e:
-        log.error(f"Lỗi cấu hình cho tác vụ 'parallels': thiếu key '{e}'")
     except Exception as e:
         log.exception(f"Đã xảy ra lỗi không mong muốn khi xử lý parallels: {e}")

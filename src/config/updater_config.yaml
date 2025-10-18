@@ -21,6 +21,7 @@ git:
       parallels:
         path: data/raw/git/suttacentral-data/relationship/parallels.json
         replacements:
+          - ["mn75.1", "mn75#1"]
         output:
           category: data/raw/git/sc_parallel_category.json
           segment: data/raw/git/sc_parallel_segment.json
