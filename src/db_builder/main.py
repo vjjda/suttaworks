@@ -79,7 +79,7 @@ def main():
             segment_data = segment_proc.process()
 
             logger.info(f"Tổng hợp được {len(segment_data)} segment.")
-            db_manager.insert_data("Segments", segment_data)
+            db_manager.insert_data("Bilara", segment_data)
             # --- KẾT THÚC CẬP NHẬT ---
             
     except Exception as e:

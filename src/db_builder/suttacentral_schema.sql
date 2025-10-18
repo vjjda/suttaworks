@@ -78,24 +78,23 @@ CREATE TABLE IF NOT EXISTS "Bibliography" (
 );
 
 -- Bảng chứa nội dung chi tiết của từng segment từ dữ liệu Bilara
-CREATE TABLE IF NOT EXISTS "Segments" (
+CREATE TABLE IF NOT EXISTS "Bilara" (
     "sc_uid" TEXT NOT NULL,
-    "segment" TEXT NOT NULL,        -- << ĐỔI TÊN TỪ segment_uid
+    "segment" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "lang" TEXT NOT NULL,
     "author_alias" TEXT,
     "content" TEXT NOT NULL,
-    -- CẬP NHẬT LẠI KHÓA CHÍNH ĐỂ ĐẢM BẢO TÍNH DUY NHẤT
     PRIMARY KEY ("sc_uid", "segment", "type", "lang", "author_alias")
 );
 
--- Index để tăng tốc độ truy vấn theo sc_uid
-CREATE INDEX IF NOT EXISTS "idx_segments_on_sc_uid" 
-ON "Segments" ("sc_uid");                          
+-- Cập nhật tên Index để tăng tốc độ truy vấn theo sc_uid
+CREATE INDEX IF NOT EXISTS "idx_bilara_on_sc_uid" 
+ON "Bilara" ("sc_uid");                          
 
--- Index tổng hợp để tối ưu cho các truy vấn phức tạp hơn
-CREATE INDEX IF NOT EXISTS "idx_segments_sutta_compound" 
-ON "Segments" ("sc_uid", "type", "lang", "author_alias");
+-- Cập nhật tên Index tổng hợp để tối ưu cho các truy vấn phức tạp hơn
+CREATE INDEX IF NOT EXISTS "idx_bilara_sutta_compound" 
+ON "Bilara" ("sc_uid", "type", "lang", "author_alias");
 
-CREATE INDEX IF NOT EXISTS "idx_segments_type_segment" 
-ON "Segments" ("sc_uid", "type", "segment", "lang", "author_alias");
+CREATE INDEX IF NOT EXISTS "idx_bilara_type_segment" 
+ON "Bilara" ("sc_uid", "type", "segment", "lang", "author_alias");
