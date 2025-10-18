@@ -70,16 +70,37 @@ def main():
             db_manager.insert_data("Sutta_References", sutta_references_data)
             db_manager.insert_data("Translations", translations_data)
             
-            # --- CẬP NHẬT: Xử lý bilara-segment trực tiếp, không cần kiểm tra ---
-            logger.info("--- Bắt đầu xử lý dữ liệu Segment Bilara ---")
-            config_item = db_config['bilara-segment']
+            # --- CẬP NHẬT: Xử lý nhiều nguồn segment từ config mới ---
+            logger.info("--- Bắt đầu xử lý dữ liệu Segment từ các nguồn ---")
             
-            logger.info(f"Chạy BilaraSegmentProcessor cho config: {config_item['json']}")
-            segment_proc = BilaraSegmentProcessor(config_item)
-            segment_data = segment_proc.process()
+            config_item = db_config.get('bilara-segment')
 
-            logger.info(f"Tổng hợp được {len(segment_data)} segment.")
-            db_manager.insert_data("Bilara", segment_data)
+            if not config_item:
+                logger.warning("⚠️ Không tìm thấy mục 'bilara-segment' trong config. Bỏ qua.")
+            else:
+                folder = config_item.get('folder')
+                author_remap = config_item.get('author-remap', {})
+                list_of_sources = config_item.get('json', [])
+
+                # Lặp qua danh sách các nguồn được định nghĩa trong key 'json'
+                for source_dict in list_of_sources:
+                    # Mỗi source_dict là một dictionary chỉ có một item, 
+                    # ví dụ: {'Segments_bilara': 'path/to/sc_bilara.json'}
+                    for table_name, manifest_path in source_dict.items():
+                        logger.info(f"▶️ Đang xử lý nguồn '{manifest_path}' cho bảng: '{table_name}'")
+                        
+                        processor_config = {
+                            'folder': folder,
+                            'json': manifest_path,
+                            'author-remap': author_remap
+                        }
+                        
+                        segment_proc = BilaraSegmentProcessor(processor_config)
+                        segment_data = segment_proc.process()
+
+                        logger.info(f"Tổng hợp được {len(segment_data)} segment. Đang chèn vào bảng '{table_name}'...")
+                        db_manager.insert_data(table_name, segment_data)
+                        logger.info(f"✅ Hoàn tất chèn dữ liệu cho bảng '{table_name}'.")
             # --- KẾT THÚC CẬP NHẬT ---
             
     except Exception as e:
