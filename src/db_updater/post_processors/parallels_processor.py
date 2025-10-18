@@ -99,26 +99,47 @@ def process_parallels_data(task_config: dict, project_root: Path):
                 full_list = [i for i in id_list if not i.startswith('~')]
                 resembling_list = [i for i in id_list if i.startswith('~')]
 
-                # 1. Xử lý 'parallels' (quan hệ hai chiều)
+                # 1. Quan hệ 'parallels' hai chiều giữa các kinh gốc (full-full)
                 for source_id, target_id in combinations(full_list, 2):
                     base_source = _parse_sutta_id(source_id)
                     base_target = _parse_sutta_id(target_id)
                     sutta_map[base_source]['parallels'][source_id].append(target_id)
                     sutta_map[base_target]['parallels'][target_id].append(source_id)
 
-                # 2. Xử lý 'resembles' (quan hệ một chiều)
+                # 2. Quan hệ 'resembles' hai chiều giữa kinh gốc và kinh tương tự (full-resembling)
                 if full_list and resembling_list:
-                    cleaned_resembling_list = [i.lstrip('~') for i in resembling_list]
-                    for source_id in full_list:
-                        base_source = _parse_sutta_id(source_id)
-                        sutta_map[base_source]['resembles'][source_id].extend(cleaned_resembling_list)
+                    for source_full in full_list:
+                        base_source_full = _parse_sutta_id(source_full)
+                        for target_resembling in resembling_list:
+                            # --- THAY ĐỔI: Bỏ dấu ~ khỏi ID ---
+                            cleaned_target = target_resembling.lstrip('~')
+                            base_target_resembling = _parse_sutta_id(cleaned_target)
+                            
+                            sutta_map[base_source_full]['resembles'][source_full].append(cleaned_target)
+                            sutta_map[base_target_resembling]['resembles'][cleaned_target].append(source_full)
 
             elif relation_type in ["mentions", "retells"]:
-                for source_id, target_id in combinations(id_list, 2):
+                full_list = [i for i in id_list if not i.startswith('~')]
+                resembling_list = [i for i in id_list if i.startswith('~')]
+
+                # 1. Quan hệ hai chiều giữa các kinh gốc (full-full)
+                for source_id, target_id in combinations(full_list, 2):
                     base_source = _parse_sutta_id(source_id)
                     base_target = _parse_sutta_id(target_id)
                     sutta_map[base_source][relation_type][source_id].append(target_id)
                     sutta_map[base_target][relation_type][target_id].append(source_id)
+
+                # 2. Quan hệ hai chiều giữa kinh gốc và kinh tương tự (full-resembling)
+                if full_list and resembling_list:
+                    for source_full in full_list:
+                        base_source_full = _parse_sutta_id(source_full)
+                        for target_resembling in resembling_list:
+                            # --- THAY ĐỔI: Bỏ dấu ~ khỏi ID ---
+                            cleaned_target = target_resembling.lstrip('~')
+                            base_target_resembling = _parse_sutta_id(cleaned_target)
+                            
+                            sutta_map[base_source_full][relation_type][source_full].append(cleaned_target)
+                            sutta_map[base_target_resembling][relation_type][cleaned_target].append(source_full)
 
         # Áp dụng sắp xếp và dọn dẹp trước khi ghi file
         final_data = _sort_and_clean_map(sutta_map)
