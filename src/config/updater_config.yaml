@@ -23,6 +23,8 @@ git:
         output:
           category: data/raw/git/sc_parallel_category.json
           segment: data/raw/git/sc_parallel_segment.json
+          flat_segment: data/raw/git/sc_parallel_flat_segment.json
+          book: data/raw/git/sc_parallel_book.json
 release:
   git-release:
     dpd:
