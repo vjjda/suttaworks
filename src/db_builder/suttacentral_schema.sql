@@ -76,3 +76,42 @@ CREATE TABLE IF NOT EXISTS "Bibliography" (
     "citation_key" TEXT,
     "full_citation" TEXT
 );
+
+-- 1. Bảng Bilara_names (đã bỏ is_root)
+CREATE TABLE IF NOT EXISTS "Bilara_names" (
+    "sc_uid" TEXT NOT NULL,
+    "lang" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    PRIMARY KEY ("sc_uid", "lang")
+);
+
+-- 2. Bảng Bilara_blurbs (đã bỏ is_root)
+CREATE TABLE IF NOT EXISTS "Bilara_blurbs" (
+    "sc_uid" TEXT NOT NULL,
+    "lang" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    PRIMARY KEY ("sc_uid", "lang")
+);
+
+-- 3. Bảng Bilara_sites
+CREATE TABLE IF NOT EXISTS "Bilara_sites" (
+    "sc_uid" TEXT NOT NULL,
+    "segment" TEXT NOT NULL,
+    "is_root" INTEGER NOT NULL,  -- << Thay thế cho cột type
+    "lang" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    PRIMARY KEY ("sc_uid", "segment", "is_root", "lang")
+);
+
+-- 4. Bảng Bilara_segments (tạm thời giữ nguyên)
+CREATE TABLE IF NOT EXISTS "Bilara_segments" (
+    "sc_uid" TEXT NOT NULL,
+    "segment" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "lang" TEXT NOT NULL,
+    "author_alias" TEXT,
+    "content" TEXT NOT NULL,
+    PRIMARY KEY ("sc_uid", "segment", "type", "lang", "author_alias")
+);
+CREATE INDEX IF NOT EXISTS "idx_bilara_segments_compound" 
+ON "Bilara_segments" ("sc_uid", "type", "lang", "author_alias");
