@@ -70,11 +70,10 @@ class BilaraTablesProcessor:
         """Biến đổi dữ liệu cho bảng Bilara_sites."""
         transformed = []
         for row in data:
-            if not all(k in row for k in ['sc_uid', 'segment', 'type', 'lang', 'content']): continue
+            if not all(k in row for k in ['sc_uid', 'segment', 'lang', 'content']): continue
             transformed.append({
                 'sc_uid': row['sc_uid'],
                 'segment': row['segment'],
-                'is_root': 1 if row['type'] == 'root' else 0,
                 'lang': row['lang'],
                 'content': row['content']
             })

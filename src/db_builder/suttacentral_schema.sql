@@ -97,10 +97,9 @@ CREATE TABLE IF NOT EXISTS "Bilara_blurbs" (
 CREATE TABLE IF NOT EXISTS "Bilara_sites" (
     "sc_uid" TEXT NOT NULL,
     "segment" TEXT NOT NULL,
-    "is_root" INTEGER NOT NULL,  -- << Thay thế cho cột type
     "lang" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    PRIMARY KEY ("sc_uid", "segment", "is_root", "lang")
+    PRIMARY KEY ("sc_uid", "segment", "lang")
 );
 
 -- 4. Bảng Bilara_segments (tạm thời giữ nguyên)
