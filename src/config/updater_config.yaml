@@ -22,10 +22,10 @@ git:
           - blurb: [blurb]
           - site: [site]
         output: 
-          site: data/raw/git/bilara/sc_site.json
-          blurb: data/raw/git/bilara/sc_blurbs.json
-          name: data/raw/git/bilara/sc_names.json
-          sutta: data/raw/git/bilara/sc_bilara.json
+          site: data/raw/git/post_processed/bilara/sc_site.json
+          blurb: data/raw/git/post_processed/bilara/sc_blurbs.json
+          name: data/raw/git/post_processed/bilara/sc_names.json
+          sutta: data/raw/git/post_processed/bilara/sc_bilara.json
       parallels:
         path: data/raw/git/suttacentral-data/relationship/parallels.json
         replacements:
