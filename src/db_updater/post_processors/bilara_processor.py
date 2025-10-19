@@ -3,6 +3,7 @@ import logging
 import json
 from pathlib import Path
 from typing import Dict, Any, List
+from natsort import natsorted  # <-- THÊM DÒNG NÀY
 
 log = logging.getLogger(__name__)
 
@@ -10,23 +11,34 @@ log = logging.getLogger(__name__)
 def _write_json_output(output_path: Path, data: Dict[str, Any], data_name: str):
     """
     Hàm phụ trợ để ghi một dictionary ra file JSON,
-    loại bỏ các category rỗng trước khi ghi.
+    loại bỏ các category rỗng và SẮP XẾP TỰ NHIÊN các key trước khi ghi.
     """
     cleaned_data = {folder: files for folder, files in data.items() if files}
 
     if cleaned_data:
-        total_files = sum(len(files) for files in cleaned_data.values())
+        # --- BẮT ĐẦU THAY ĐỔI ---
+        # Sắp xếp tự nhiên các key bên trong mỗi folder
+        sorted_data = {}
+        for folder, files in cleaned_data.items():
+            # Sử dụng natsorted để lấy danh sách key đã được sắp xếp đúng
+            sorted_keys = natsorted(files.keys())
+            # Dựng lại dictionary với thứ tự key mới
+            sorted_files = {key: files[key] for key in sorted_keys}
+            sorted_data[folder] = sorted_files
+        # --- KẾT THÚC THAY ĐỔI ---
+
+        total_files = sum(len(files) for files in sorted_data.values())
         log.info(f"Tìm thấy {total_files} file JSON cho nhóm '{data_name}'. Đang ghi ra file: {output_path}")
         output_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(cleaned_data, f, ensure_ascii=False, indent=2)
+                # Ghi dữ liệu đã được sắp xếp
+                json.dump(sorted_data, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã tạo file tổng hợp Bilara ({data_name}) thành công.")
         except IOError as e:
             log.error(f"Không thể ghi file JSON ({data_name}): {e}")
     else:
         log.warning(f"Không tìm thấy file JSON nào cho nhóm '{data_name}'.")
-
 
 def process_bilara_data(config: Dict, project_root: Path):
     """
