@@ -2,4 +2,12 @@
     "scm.ignoredRepositories": [
     "data/raw/suttacentral"
 ],
+"sqltools.connections": [
+    {
+        "previewLimit": 1000,
+        "driver": "SQLite",
+        "name": "SuttaCentral",
+        "database": "${workspaceFolder:suttacentral-vj}/data/processed/suttacentral.sqlite"
+    }
+],
 }
