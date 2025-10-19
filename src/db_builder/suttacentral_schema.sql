@@ -112,5 +112,75 @@ CREATE TABLE IF NOT EXISTS "Bilara_segments" (
     "content" TEXT NOT NULL,
     PRIMARY KEY ("sc_uid", "segment", "type", "lang", "author_alias")
 );
-CREATE INDEX IF NOT EXISTS "idx_bilara_segments_compound" 
-ON "Bilara_segments" ("sc_uid", "type", "lang", "author_alias");
+
+CREATE INDEX IF NOT EXISTS idx_bilara_main_query
+ON Bilara_segments (type, lang, sc_uid, segment, author_alias);
+
+CREATE INDEX IF NOT EXISTS idx_bilara_segments_sc_uid 
+ON Bilara_segments (sc_uid, segment);
+
+-- 1. VIEW cho type = 'html'
+DROP VIEW IF EXISTS V_HtmlSegments;
+CREATE VIEW V_HtmlSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'html'
+ORDER BY rowid;
+
+-- 2. VIEW cho type = 'reference'
+DROP VIEW IF EXISTS V_ReferenceSegments;
+CREATE VIEW V_ReferenceSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'reference'
+ORDER BY rowid;
+
+-- 3. VIEW cho type = 'root'
+DROP VIEW IF EXISTS V_RootSegments;
+CREATE VIEW V_RootSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'root'
+ORDER BY rowid;
+
+-- 4. VIEW cho type = 'translation'
+DROP VIEW IF EXISTS V_TranslationSegments;
+CREATE VIEW V_TranslationSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'translation'
+ORDER BY rowid;
+
+
+-- 5. VIEW cho type = 'variant'
+DROP VIEW IF EXISTS V_VariantSegments;
+CREATE VIEW V_VariantSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'variant'
+ORDER BY rowid;
+
+
+-- 6. VIEW cho type = 'comment'
+DROP VIEW IF EXISTS V_CommentSegments;
+CREATE VIEW V_CommentSegments AS
+SELECT rowid, sc_uid, segment, lang, author_alias, content
+FROM Bilara_segments
+WHERE type = 'comment'
+ORDER BY rowid;
+
+
+DROP VIEW IF EXISTS V_SitesEN;
+CREATE VIEW V_SitesEN AS
+SELECT rowid, sc_uid, segment, content
+FROM Bilara_sites
+WHERE lang = 'en'
+ORDER BY rowid;
+
+
+DROP VIEW IF EXISTS V_SitesOthers;
+CREATE VIEW V_SitesOthers AS
+SELECT rowid, sc_uid, segment, lang, content
+FROM Bilara_sites
+WHERE lang != 'en'
+ORDER BY rowid;
