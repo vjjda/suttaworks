@@ -1,14 +1,51 @@
-# Path: src/db_updater/post_processors/parallels_processor.py
+# Path: src/db_updater/post_processors/parallels/processor.py
 import json
 import logging
 from pathlib import Path
 from itertools import combinations
 from collections import defaultdict
+from natsort import natsorted
+from typing import Any
 
-# Import các module đã được chia nhỏ
-from .parallels import sorter, transformer, utils
+from .parallels import transformer, utils
 
 log = logging.getLogger(__name__)
+
+# --- BẮT ĐẦU THAY ĐỔI ---
+
+# Hằng số định nghĩa thứ tự ưu tiên, lấy từ sorter.py cũ
+RELATION_ORDER = ["parallels", "resembles", "mentions", "retells"]
+
+def _sort_data_naturally(data: Any) -> Any:
+    """
+    Hàm đệ quy để sắp xếp tự nhiên MỌI THỨ:
+    - Sắp xếp key của dict.
+    - Ưu tiên thứ tự cho các key relation (parallels, resembles...).
+    - Sắp xếp và LOẠI BỎ TRÙNG LẶP cho các phần tử của list.
+    """
+    if isinstance(data, (dict, defaultdict)):
+        sorted_keys = natsorted(data.keys())
+        
+        # KIỂM TRA LOGIC ĐẶC BIỆT: Nếu tất cả các key đều là relation type
+        # thì sắp xếp chúng theo thứ tự ưu tiên đã định nghĩa.
+        if all(key in RELATION_ORDER for key in sorted_keys):
+            sorted_keys.sort(key=lambda k: RELATION_ORDER.index(k) if k in RELATION_ORDER else len(RELATION_ORDER))
+
+        return {
+            key: _sort_data_naturally(data[key])
+            for key in sorted_keys
+        }
+
+    if isinstance(data, list):
+        # THÊM LOGIC: Loại bỏ các phần tử trùng lặp trước khi sắp xếp
+        unique_items = list(dict.fromkeys(data))
+        try:
+            return natsorted(unique_items)
+        except TypeError:
+            return [_sort_data_naturally(item) for item in unique_items]
+            
+    return data
+
 
 def _build_initial_map(data: list) -> defaultdict:
     """Xây dựng map ban đầu từ dữ liệu gốc (luôn theo cấu trúc Category)."""
@@ -36,6 +73,7 @@ def _build_initial_map(data: list) -> defaultdict:
                         sutta_map[base_s]['resembles'][source].append(cleaned_t)
                         sutta_map[base_t]['resembles'][cleaned_t].append(source)
         elif relation_type in ["mentions", "retells"]:
+            # Logic này có vẻ lặp lại, có thể gộp chung với 'parallels' trong tương lai
             for source, target in combinations(full_list, 2):
                 base_s = utils.parse_sutta_id(source)
                 base_t = utils.parse_sutta_id(target)
@@ -92,7 +130,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
         category_data, segment_data = None, None
 
         if paths['category']:
-            category_data = sorter.sort_category_map(sutta_map)
+            category_data = _sort_data_naturally(sutta_map) # <-- THAY ĐỔI
             paths['category'].parent.mkdir(parents=True, exist_ok=True)
             with open(paths['category'], 'w', encoding='utf-8') as f:
                 json.dump(category_data, f, ensure_ascii=False, indent=2)
@@ -100,7 +138,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
 
         if any([paths['segment'], paths['flat'], paths['book']]):
             segment_map = transformer.invert_to_segment_structure(sutta_map)
-            segment_data = sorter.sort_segment_map(segment_map)
+            segment_data = _sort_data_naturally(segment_map) # <-- THAY ĐỔI
             if paths['segment']:
                 paths['segment'].parent.mkdir(parents=True, exist_ok=True)
                 with open(paths['segment'], 'w', encoding='utf-8') as f:
@@ -109,7 +147,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
         
         if paths['flat']:
             flat_map = transformer.flatten_segment_map(segment_data)
-            flat_data = sorter.sort_flat_segment_map(flat_map)
+            flat_data = _sort_data_naturally(flat_map) # <-- THAY ĐỔI
             paths['flat'].parent.mkdir(parents=True, exist_ok=True)
             with open(paths['flat'], 'w', encoding='utf-8') as f:
                 json.dump(flat_data, f, ensure_ascii=False, indent=2)
@@ -117,7 +155,7 @@ def process_parallels_data(task_config: dict, project_root: Path):
         
         if paths['book']:
             book_map = transformer.create_book_structure(segment_data)
-            book_data = sorter.sort_book_map(book_map)
+            book_data = _sort_data_naturally(book_map) # <-- THAY ĐỔI
             paths['book'].parent.mkdir(parents=True, exist_ok=True)
             with open(paths['book'], 'w', encoding='utf-8') as f:
                 json.dump(book_data, f, ensure_ascii=False, indent=2)
