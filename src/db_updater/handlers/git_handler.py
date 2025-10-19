@@ -1,13 +1,16 @@
+# Path: src/db_updater/handlers/git_handler.py
 import logging
 import subprocess
 import configparser
 from pathlib import Path
 from src.config import constants
 
+# --- THAY ĐỔI 1: Thêm import mới ---
 from src.db_updater.post_processors import (
     bilara_processor, 
     html_text_authors_processor,
     cips_processor,
+    cips_csv_processor,  # <-- THÊM DÒNG NÀY
     parallels_processor
 )
 
@@ -59,9 +62,8 @@ def process_git_submodules(
     run_post_process: bool = True,
     tasks_to_run: list[str] | None = None
 ):
-    # LẤY project_root TỪ CONSTANTS
     project_root = constants.PROJECT_ROOT
-    # --- Giai đoạn 1: Cập nhật submodules ---
+    # --- Giai đoạn 1: Cập nhật submodules (Không đổi) ---
     if run_update:
         log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU GIT SUBMODULE ===")
         base_dir.mkdir(parents=True, exist_ok=True)
@@ -71,7 +73,6 @@ def process_git_submodules(
         if gitmodules_path.exists():
             config.read(gitmodules_path)
 
-        # THAY ĐỔI 2: Lặp qua dictionary các repo
         submodule_repos = {k: v for k, v in handler_config.items() if k != 'post'}
         submodule_names = list(submodule_repos.keys())
         has_new_submodules = False
@@ -109,25 +110,32 @@ def process_git_submodules(
         log.info("Bỏ qua giai đoạn cập nhật dữ liệu Git Submodule theo yêu cầu.")
 
     # --- Giai đoạn 2: Hậu xử lý ---
-    # THAY ĐỔI 3: Logic hậu xử lý giờ nằm ngoài vòng lặp repo và giống hệt api_handler
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
         if 'post' in handler_config:
             post_tasks = handler_config['post']
+
+            # --- THAY ĐỔI 2: Tái cấu trúc thành Task Dispatcher ---
+            TASK_DISPATCHER = {
+                "bilara": bilara_processor.process_bilara_data,
+                "html_text": html_text_authors_processor.process_html_text_authors_data,
+                "cips-json": cips_processor.process_cips_csv_to_json,
+                "cips-csv": cips_csv_processor.process_cips_to_csv, # <-- DÒNG MỚI
+                "parallels": parallels_processor.process_parallels_data,
+            }
+            # --- KẾT THÚC TÁI CẤU TRÚC ---
+
             for task_name, task_config in post_tasks.items():
                 if tasks_to_run is None or task_name in tasks_to_run:
                     log.info(f"  -> Bắt đầu tác vụ: '{task_name}'...")
                     
-                    if task_name == "bilara":
-                        bilara_processor.process_bilara_data(task_config, project_root)
-                    elif task_name == "html_text":
-                        html_text_authors_processor.process_html_text_authors_data(task_config, project_root)
-                    elif task_name == "cips-json":
-                        cips_processor.process_cips_csv_to_json(task_config, project_root)
-                    elif task_name == "parallels":
-                        parallels_processor.process_parallels_data(task_config, project_root)
+                    # --- THAY ĐỔI 3: Sử dụng Dispatcher ---
+                    task_function = TASK_DISPATCHER.get(task_name)
+                    if task_function:
+                        task_function(task_config, project_root)
                     else:
                         log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
+                    # --- KẾT THÚC SỬ DỤNG DISPATCHER ---
                 else:
                     log.info(f"  -> Bỏ qua tác vụ '{task_name}' theo yêu cầu.")
     else:
