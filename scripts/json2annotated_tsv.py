@@ -6,7 +6,7 @@ ROOT_PALI_DIR = Path("data/raw/git/suttacentral-data/sc_bilara_data/root/pli/ms/
 ROOT_EN_DIR   = Path("data/raw/git/suttacentral-data/sc_bilara_data/translation/en/sujato/sutta")
 OUTPUT_DIR    = Path("data/processed/sutta_tsv")
 
-TAB_COUNT = 2  # số lượng \t giữa cột affix và value
+TAB_COUNT = 3  # số lượng \t giữa cột affix và value
 
 
 # === FUNCTION: Convert matching Pali & English JSONs to TSV ===
