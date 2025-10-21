@@ -1,3 +1,4 @@
+# Path: scripts/json2annotated_tsv.py
 from pathlib import Path
 import json
 

@@ -1,5 +1,6 @@
 # Path: scripts/update_path_comments.py
 import argparse
+import configparser
 import logging
 from pathlib import Path
 
@@ -10,59 +11,112 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
+def get_submodule_paths(root: Path) -> set:
+    """Đọc file .gitmodules và trả về một set các đường dẫn submodule."""
+    submodule_paths = set()
+    gitmodules_path = root / ".gitmodules"
+    if gitmodules_path.exists():
+        try:
+            config = configparser.ConfigParser()
+            config.read(gitmodules_path)
+            for section in config.sections():
+                if config.has_option(section, "path"):
+                    # Chuyển đổi thành đường dẫn tuyệt đối để so sánh
+                    submodule_paths.add((root / config.get(section, "path")).resolve())
+        except configparser.Error as e:
+            log.warning(f"Không thể đọc file .gitmodules: {e}")
+    return submodule_paths
+
 def run_update(target_dir: Path):
-    """Quét và cập nhật các comment # Path: trong một thư mục mục tiêu được chỉ định."""
+    """
+    Quét và cập nhật hoặc thêm comment # Path:, bỏ qua các thư mục được chỉ định,
+    submodules, và file __init__.py rỗng.
+    """
     if not target_dir.is_dir():
         log.error(f"Lỗi: Không tìm thấy thư mục mục tiêu: {target_dir}")
         return
 
-    log.info(f"🔎 Bắt đầu quét các file .py trong: {target_dir}")
+    # --- BẮT ĐẦU THAY ĐỔI 1: Lấy danh sách submodule và thư mục loại trừ ---
+    submodule_paths = get_submodule_paths(PROJECT_ROOT)
+    excluded_dirs = {".venv", "venv", "__pycache__", ".git"}
     
-    files_to_update = list(target_dir.rglob("*.py"))
-    updated_count = 0
+    log.info(f"🔎 Bắt đầu quét các file .py trong: {target_dir}")
+    log.info(f"🚫 Sẽ bỏ qua các thư mục: {', '.join(excluded_dirs)}")
+    if submodule_paths:
+        relative_sub_paths = [p.relative_to(PROJECT_ROOT).as_posix() for p in submodule_paths]
+        log.info(f"🚫 Sẽ bỏ qua các submodule: {', '.join(relative_sub_paths)}")
 
-    if not files_to_update:
-        log.warning("Không tìm thấy file Python nào để xử lý.")
+    all_files = list(target_dir.rglob("*.py"))
+    files_to_process = []
+    for file_path in all_files:
+        abs_file_path = file_path.resolve()
+        
+        # Kiểm tra xem có nằm trong thư mục loại trừ cơ bản không
+        is_in_excluded_dir = any(part in excluded_dirs for part in file_path.relative_to(PROJECT_ROOT).parts)
+        if is_in_excluded_dir:
+            continue
+
+        # Kiểm tra xem có nằm trong submodule không
+        is_in_submodule = any(abs_file_path.is_relative_to(p) for p in submodule_paths)
+        if is_in_submodule:
+            continue
+            
+        files_to_process.append(file_path)
+    # --- KẾT THÚC THAY ĐỔI 1 ---
+
+    processed_count = 0
+    if not files_to_process:
+        log.warning("Không tìm thấy file Python nào để xử lý (sau khi đã loại trừ).")
         return
 
-    for file_path in files_to_update:
+    for file_path in files_to_process:
+        relative_path = file_path.relative_to(PROJECT_ROOT)
         try:
-            # Bỏ qua chính file script này
             if file_path.samefile(PROJECT_ROOT / __file__):
                 continue
 
             with file_path.open('r', encoding='utf-8') as f:
                 lines = f.readlines()
 
-            if not lines or not lines[0].strip().startswith("# Path:"):
+            is_empty_or_whitespace = all(not line.strip() for line in lines)
+            if file_path.name == "__init__.py" and is_empty_or_whitespace:
+                log.info(f"  -> Bỏ qua file __init__.py rỗng: {relative_path.as_posix()}")
                 continue
             
-            # --- THAY ĐỔI 1: Bỏ dấu "/" ở đầu ---
-            relative_path = file_path.relative_to(PROJECT_ROOT)
             correct_comment = f"# Path: {relative_path.as_posix()}\n"
+            action = None
+            
+            if not lines:
+                action = "Thêm"
+                lines.append(correct_comment)
+            elif lines[0].strip().startswith("# Path:"):
+                if lines[0] != correct_comment:
+                    action = "Cập nhật"
+                    lines[0] = correct_comment
+            else:
+                action = "Thêm"
+                lines.insert(0, correct_comment)
 
-            if lines[0] != correct_comment:
-                log.info(f"  -> Đang cập nhật: {relative_path.as_posix()}")
-                lines[0] = correct_comment
+            if action:
+                log.info(f"  -> {action} path trong: {relative_path.as_posix()}")
                 with file_path.open('w', encoding='utf-8') as f:
                     f.writelines(lines)
-                updated_count += 1
+                processed_count += 1
                 
         except Exception as e:
-            log.error(f"  -> Lỗi khi xử lý file {file_path.name}: {e}")
+            log.error(f"  -> Lỗi khi xử lý file {relative_path.as_posix()}: {e}")
 
     log.info("-" * 20)
-    if updated_count > 0:
-        log.info(f"✅ Hoàn tất! Đã cập nhật {updated_count} file.")
+    if processed_count > 0:
+        log.info(f"✅ Hoàn tất! Đã xử lý {processed_count} file.")
     else:
-        log.info("✅ Tất cả các comment đường dẫn đã chính xác. Không cần cập nhật.")
+        log.info("✅ Tất cả các file đã tuân thủ quy ước. Không cần thay đổi.")
 
 def main():
     """Thiết lập và phân tích các tham số dòng lệnh."""
     parser = argparse.ArgumentParser(
-        description="Tự động cập nhật comment '# Path:' ở đầu các file Python trong một thư mục."
+        description="Tự động cập nhật hoặc thêm comment '# Path:' ở đầu các file Python."
     )
-    # --- THAY ĐỔI 2: Đặt default là "." (thư mục hiện tại) ---
     parser.add_argument(
         "target_directory",
         nargs='?',
