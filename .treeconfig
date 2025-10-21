@@ -32,7 +32,7 @@ ignore = __pycache__,.venv,venv,node_modules,.git,*.log
 ; Example (single names):        prune = dist, build
 ; Example (path with wildcard):  prune = */suttaplex/update
 ;
-prune = sutta_tsv,dhammatalks,buddha-words,tamtangpaliviet,*/suttaplex/update,*/release/dpd,dist,build
+prune = sutta_tsv,dhammatalks,buddha-words,tamtangpaliviet,*/suttaplex/update,dist,build,*/dpd/dpd-kindle
 
 ; dirs-only: Only display subdirectories inside directories matching a pattern.
 ; The entry directory will be marked with '[dirs only]'.

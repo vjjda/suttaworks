@@ -38,11 +38,11 @@ git:
       # cips-csv:
       #   path: data/raw/git/cips/src/data/general-index.csv
       #   output:
-      #     - topics: data/raw/git/post_processed/airtable/cips_topics.csv
-      #     - suttas: data/raw/git/post_processed/airtable/cips_suttas.csv
-      #     - segments: data/raw/git/post_processed/airtable/cips_segments.csv
-      #     - links: data/raw/git/post_processed/airtable/cips_sutta_topic_links.csv # <-- DÒNG MỚI
-      #     - reverse_links: data/raw/git/post_processed/airtable/cips_topic_sutta_links.csv
+      #     - topics: data/processed/prebuild/airtable/cips_topics.csv
+      #     - suttas: data/processed/prebuild/airtable/cips_suttas.csv
+      #     - segments: data/processed/prebuild/airtable/cips_segments.csv
+      #     - links: data/processed/prebuild/airtable/cips_sutta_topic_links.csv # <-- DÒNG MỚI
+      #     - reverse_links: data/processed/prebuild/airtable/cips_topic_sutta_links.csv
           
 
 release:
@@ -79,7 +79,7 @@ suttaplex:
       suttaplex-json:
         priority: [update]
         super-tree: [sutta, vinaya, abhidhamma]
-        output: data/raw/suttaplex/suttaplex.json
+        output: data/processed/prebuild/suttaplex-json/suttaplex.json
   
 # dhammatalks:
 #   crawl:
