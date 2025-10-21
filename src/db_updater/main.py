@@ -27,8 +27,8 @@ def get_available_tasks(config: dict, module_name: str) -> list[str]:
     if not module_config: return []
     handler_type = list(module_config.keys())[0]
     handler_config = module_config[handler_type]
-    if 'post' in handler_config and isinstance(handler_config['post'], dict):
-        tasks.extend(handler_config['post'].keys())
+    if 'post_tasks:' in handler_config and isinstance(handler_config['post_tasks:'], dict):
+        tasks.extend(handler_config['post_tasks:'].keys())
     return list(dict.fromkeys(tasks))
 
 # --- THAY ĐỔI 2: Hàm riêng cho việc parse arguments ---

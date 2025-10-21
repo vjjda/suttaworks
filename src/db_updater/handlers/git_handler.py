@@ -69,7 +69,7 @@ def process_git_submodules(
         if gitmodules_path.exists():
             config.read(gitmodules_path)
 
-        submodule_repos = {k: v for k, v in handler_config.items() if k != 'post'}
+        submodule_repos = {k: v for k, v in handler_config.items() if k != 'post_tasks'}
         has_new_submodules = False
 
         for name, url in submodule_repos.items():
@@ -142,8 +142,8 @@ def process_git_submodules(
 
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
-        if 'post' in handler_config:
-            post_tasks = handler_config['post']
+        if 'post_tasks' in handler_config:
+            post_tasks = handler_config['post_tasks']
             TASK_DISPATCHER = {
                 "bilara": bilara_processor.process_bilara_data,
                 "html_text": html_text_authors_processor.process_html_text_authors_data,
