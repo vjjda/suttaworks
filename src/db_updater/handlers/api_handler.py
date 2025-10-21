@@ -1,10 +1,13 @@
+# Path: src/db_updater/handlers/api_handler.py
 import logging
 import requests
 import json
 from pathlib import Path
 from typing import Dict, List
 
-from src.db_updater.post_processors import suttaplex_json_processor
+# --- BẮT ĐẦU THAY ĐỔI: Cập nhật import ---
+from src.db_updater.post_tasks import suttaplex_json_task
+# --- KẾT THÚC THAY ĐỔI ---
 from src.config import constants
 
 log = logging.getLogger(__name__)
@@ -23,7 +26,6 @@ def _fetch_and_save(url: str, filepath: Path):
         log.error(f"Lỗi khi tải {url}: {e}")
         return False
 
-# --- HÀM ĐÃ ĐƯỢỢC CẬP NHẬT ---
 def process_api_data(
     handler_config: Dict, 
     destination_dir: Path,
@@ -36,7 +38,6 @@ def process_api_data(
     """
     all_successful = True
     
-    # --- THAY ĐỔI 1: Gói logic cập nhật trong khối `if run_update` ---
     if run_update:
         log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU TỪ API ===")
         base_url = handler_config.get('base_url')
@@ -60,21 +61,20 @@ def process_api_data(
             log.info("Tải dữ liệu API hoàn tất.")
         else:
             log.error("Có lỗi xảy ra trong quá trình tải API, sẽ không chạy hậu xử lý.")
-            # Nếu tải lỗi, không nên chạy hậu xử lý kể cả khi được yêu cầu
             return
     else:
         log.info("Bỏ qua giai đoạn cập nhật dữ liệu API theo yêu cầu.")
 
-    # --- THAY ĐỔI 2: Gói logic hậu xử lý trong khối `if run_post_process` ---
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
         if 'post_tasks' in handler_config:
             for task_name, task_config in handler_config['post_tasks'].items():
-                # --- THAY ĐỔI 3: Kiểm tra tác vụ có được phép chạy không ---
                 if tasks_to_run is None or task_name in tasks_to_run:
                     log.info(f"--> Bắt đầu tác vụ: '{task_name}'...")
                     if task_name == 'suttaplex-json':
-                        suttaplex_json_processor.process_suttaplex_json(task_config, constants.PROJECT_ROOT, destination_dir)
+                        # --- BẮT ĐẦU THAY ĐỔI: Cập nhật tên module gọi hàm ---
+                        suttaplex_json_task.process_suttaplex_json(task_config, constants.PROJECT_ROOT, destination_dir)
+                        # --- KẾT THÚC THAY ĐỔI ---
                     else:
                         log.warning(f"--> Tác vụ hậu xử lý không được hỗ trợ: {task_name}")
                 else:

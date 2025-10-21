@@ -1,4 +1,4 @@
-# Path: src/db_updater/post_processors/bilara_processor.py
+# Path: src/db_updater/post_tasks/bilara_task.py
 import logging
 import json
 from pathlib import Path

@@ -1,4 +1,4 @@
-# Path: /src/config/logging_config.py
+# Path: src/config/logging_config.py
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path

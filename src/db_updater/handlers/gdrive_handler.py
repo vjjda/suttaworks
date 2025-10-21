@@ -1,4 +1,4 @@
-# Path: /src/db_updater/handlers/gdrive_handler.py
+# Path: src/db_updater/handlers/gdrive_handler.py
 import os
 import re
 import json

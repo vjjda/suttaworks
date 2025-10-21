@@ -1,4 +1,4 @@
-# Path: src/db_updater/post_processors/parallels/processor.py
+# Path: src/db_updater/post_tasks/parallels_task.py
 import json
 import logging
 from pathlib import Path

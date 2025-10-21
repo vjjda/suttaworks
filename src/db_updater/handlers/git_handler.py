@@ -4,12 +4,12 @@ import subprocess
 import configparser
 from pathlib import Path
 from src.config import constants
-from src.db_updater.post_processors import (
-    bilara_processor, 
-    html_text_authors_processor,
-    cips_processor,
-    cips_csv_processor,
-    parallels_processor
+# --- BẮT ĐẦU THAY ĐỔI 1: Cập nhật imports ---
+from src.db_updater.post_tasks import (
+    bilara_task, 
+    html_text_authors_task,
+    cips_task,
+    parallels_task
 )
 
 log = logging.getLogger(__name__)
@@ -144,12 +144,13 @@ def process_git_submodules(
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
         if 'post_tasks' in handler_config:
             post_tasks = handler_config['post_tasks']
+
+            # --- BẮT ĐẦU THAY ĐỔI 2: Cập nhật TASK_DISPATCHER ---
             TASK_DISPATCHER = {
-                "bilara": bilara_processor.process_bilara_data,
-                "html_text": html_text_authors_processor.process_html_text_authors_data,
-                "cips-json": cips_processor.process_cips_csv_to_json,
-                "cips-csv": cips_csv_processor.process_cips_to_csv,
-                "parallels": parallels_processor.process_parallels_data,
+                "bilara": bilara_task.process_bilara_data,
+                "html_text": html_text_authors_task.process_html_text_authors_data,
+                "cips-json": cips_task.process_cips_csv_to_json,
+                "parallels": parallels_task.process_parallels_data,
             }
 
             for task_name, task_config in post_tasks.items():

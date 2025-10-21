@@ -1,4 +1,4 @@
-# Path: /src/db_updater/handlers/crawl_handler.py
+# Path: src/db_updater/handlers/crawl_handler.py
 import requests
 from urllib.parse import urljoin, urlparse
 from pathlib import Path

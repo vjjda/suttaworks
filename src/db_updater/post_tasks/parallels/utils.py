@@ -1,4 +1,4 @@
-# Path: src/db_updater/post_processors/parallels/utils.py
+# Path: src/db_updater/post_tasks/parallels/utils.py
 import re
 
 # --- XÓA HÀM natural_sort_key(s: str) KHỎI ĐÂY ---

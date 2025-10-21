@@ -1,4 +1,4 @@
-# Path: /src/db_updater/handlers/git_release_handler.py
+# Path: src/db_updater/handlers/git_release_handler.py
 import json
 import logging
 import os

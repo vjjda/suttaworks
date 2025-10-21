@@ -1,4 +1,4 @@
-# Path: /src/db_updater/config_parser.py
+# Path: src/db_updater/config_parser.py
 import yaml
 from pathlib import Path
 import logging

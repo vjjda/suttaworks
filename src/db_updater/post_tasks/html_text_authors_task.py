@@ -1,4 +1,4 @@
-# Path: src/db_updater/post_processors/html_text_authors_processor.py
+# Path: src/db_updater/post_tasks/html_text_authors_task.py
 import logging
 import json
 from pathlib import Path

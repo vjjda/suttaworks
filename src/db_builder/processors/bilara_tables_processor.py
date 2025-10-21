@@ -1,4 +1,4 @@
-# Path: src/db_builder/processors/bilara_segment_processor.py
+# Path: src/db_builder/processors/bilara_tables_processor.py
 
 import json
 import logging

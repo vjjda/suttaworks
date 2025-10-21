@@ -1,4 +1,4 @@
-# Path: src/db_updater/post_processors/parallels/transformer.py
+# Path: src/db_updater/post_tasks/parallels/transformer.py
 from collections import defaultdict
 from . import utils
 
