@@ -4,20 +4,17 @@ import subprocess
 import configparser
 from pathlib import Path
 from src.config import constants
-
-# --- THAY ĐỔI 1: Thêm import mới ---
 from src.db_updater.post_processors import (
     bilara_processor, 
     html_text_authors_processor,
     cips_processor,
-    cips_csv_processor,  # <-- THÊM DÒNG NÀY
+    cips_csv_processor,
     parallels_processor
 )
 
 log = logging.getLogger(__name__)
 
 def _run_command(command: list[str], cwd: Path):
-    # ... (Hàm này không thay đổi)
     log.info(f"Đang chạy lệnh: {' '.join(command)}...")
     log.info("(Tiến trình này có thể mất vài phút, vui lòng chờ...)")
     try:
@@ -63,7 +60,6 @@ def process_git_submodules(
     tasks_to_run: list[str] | None = None
 ):
     project_root = constants.PROJECT_ROOT
-    # --- Giai đoạn 1: Cập nhật submodules (Không đổi) ---
     if run_update:
         log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU GIT SUBMODULE ===")
         base_dir.mkdir(parents=True, exist_ok=True)
@@ -74,7 +70,6 @@ def process_git_submodules(
             config.read(gitmodules_path)
 
         submodule_repos = {k: v for k, v in handler_config.items() if k != 'post'}
-        submodule_names = list(submodule_repos.keys())
         has_new_submodules = False
 
         for name, url in submodule_repos.items():
@@ -95,47 +90,76 @@ def process_git_submodules(
         log.info("Bắt đầu cập nhật tất cả các submodule đã đăng ký...")
         update_command = ["git", "submodule", "update", "--init", "--remote", "--force"]
         
-        if _run_command(update_command, cwd=project_root):
-            log.info("Cập nhật submodule hoàn tất. Tự động commit các thay đổi...")
-            commit_message = f"chore(data): Update data from submodules: {', '.join(submodule_names)}"
+        if not _run_command(update_command, cwd=project_root):
+            log.warning("Cập nhật submodule thất bại. Có thể sẽ ảnh hưởng đến giai đoạn hậu xử lý.")
+            return
+
+        # --- BẮT ĐẦU THAY ĐỔI: LOGIC COMMIT THÔNG MINH HƠN ---
+        log.info("Kiểm tra trạng thái sau khi cập nhật để xác định các thay đổi...")
+        status_command = ["git", "status", "--porcelain"]
+        
+        try:
+            status_result = subprocess.run(
+                status_command,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                cwd=project_root,
+                check=True
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            log.error(f"Không thể chạy 'git status' để kiểm tra thay đổi. Bỏ qua bước commit. Lỗi: {e}")
+            return
+
+        changed_submodule_names = []
+        if status_result.stdout:
+            lines = status_result.stdout.strip().split('\n')
+            for line in lines:
+                # Dòng cho submodule thay đổi có dạng " M path/to/submodule"
+                if line.startswith(" M "):
+                    path_str = line.strip().split(" ", 1)[1]
+                    # Chỉ thêm tên thư mục cuối cùng (tên submodule) vào danh sách
+                    changed_submodule_names.append(Path(path_str).name)
+
+        if not changed_submodule_names:
+            log.info("Không có submodule nào thực sự thay đổi. Không cần commit.")
+        else:
+            log.info(f"Phát hiện thay đổi trong các submodule: {', '.join(changed_submodule_names)}")
+            log.info("Tự động commit các thay đổi...")
+            
+            commit_message = f"chore(data): Update data from submodules: {', '.join(changed_submodule_names)}"
             add_command = ["git", "add", "."]
             commit_command = ["git", "commit", "-m", commit_message]
+            
             if _run_command(add_command, cwd=project_root):
                 _run_command(commit_command, cwd=project_root)
             else:
                 log.error("Lỗi khi thực hiện 'git add', bỏ qua bước commit.")
-        else:
-            log.warning("Cập nhật submodule thất bại. Có thể sẽ ảnh hưởng đến giai đoạn hậu xử lý.")
+        # --- KẾT THÚC THAY ĐỔI ---
+
     else:
         log.info("Bỏ qua giai đoạn cập nhật dữ liệu Git Submodule theo yêu cầu.")
 
-    # --- Giai đoạn 2: Hậu xử lý ---
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
         if 'post' in handler_config:
             post_tasks = handler_config['post']
-
-            # --- THAY ĐỔI 2: Tái cấu trúc thành Task Dispatcher ---
             TASK_DISPATCHER = {
                 "bilara": bilara_processor.process_bilara_data,
                 "html_text": html_text_authors_processor.process_html_text_authors_data,
                 "cips-json": cips_processor.process_cips_csv_to_json,
-                "cips-csv": cips_csv_processor.process_cips_to_csv, # <-- DÒNG MỚI
+                "cips-csv": cips_csv_processor.process_cips_to_csv,
                 "parallels": parallels_processor.process_parallels_data,
             }
-            # --- KẾT THÚC TÁI CẤU TRÚC ---
 
             for task_name, task_config in post_tasks.items():
                 if tasks_to_run is None or task_name in tasks_to_run:
                     log.info(f"  -> Bắt đầu tác vụ: '{task_name}'...")
-                    
-                    # --- THAY ĐỔI 3: Sử dụng Dispatcher ---
                     task_function = TASK_DISPATCHER.get(task_name)
                     if task_function:
                         task_function(task_config, project_root)
                     else:
                         log.warning(f"  -> Tác vụ không được hỗ trợ: '{task_name}'. Bỏ qua.")
-                    # --- KẾT THÚC SỬ DỤNG DISPATCHER ---
                 else:
                     log.info(f"  -> Bỏ qua tác vụ '{task_name}' theo yêu cầu.")
     else:
