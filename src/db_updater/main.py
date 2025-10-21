@@ -1,9 +1,9 @@
+# Path: src/db_updater/main.py
 import argparse
 import sys
 import logging
 from pathlib import Path
 
-# ... (các import không đổi) ...
 from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
 from src.db_updater.handlers import api_handler, gdrive_handler, git_handler, git_release_handler
@@ -12,7 +12,6 @@ from src.config import constants
 setup_logging("db_updater.log")
 log = logging.getLogger(__name__)
 
-# --- THAY ĐỔI 1: Dispatcher Pattern ---
 HANDLER_DISPATCHER = {
     "git-submodule": git_handler.process_git_submodules,
     "api": api_handler.process_api_data,
@@ -21,17 +20,16 @@ HANDLER_DISPATCHER = {
 }
 
 def get_available_tasks(config: dict, module_name: str) -> list[str]:
-    # ... (hàm này không đổi) ...
     tasks = []
     module_config = config.get(module_name, {})
     if not module_config: return []
     handler_type = list(module_config.keys())[0]
     handler_config = module_config[handler_type]
-    if 'post_tasks:' in handler_config and isinstance(handler_config['post_tasks:'], dict):
-        tasks.extend(handler_config['post_tasks:'].keys())
+    # Sử dụng 'post_tasks' thay vì 'post'
+    if 'post_tasks' in handler_config and isinstance(handler_config['post_tasks'], dict):
+        tasks.extend(handler_config['post_tasks'].keys())
     return list(dict.fromkeys(tasks))
 
-# --- THAY ĐỔI 2: Hàm riêng cho việc parse arguments ---
 def _setup_and_parse_args(available_modules: list[str]) -> argparse.Namespace:
     """Cài đặt và thực thi việc phân tích các argument từ dòng lệnh."""
     parser = argparse.ArgumentParser(
@@ -43,16 +41,25 @@ def _setup_and_parse_args(available_modules: list[str]) -> argparse.Namespace:
         help="Tên module cần cập nhật (e.g., 'git', 'git,suttaplex', 'all').\n"
              "Nếu gọi không có giá trị, sẽ liệt kê các module có sẵn."
     )
-    parser.add_argument('--update-only', action='store_true', help="Chỉ cập nhật dữ liệu.")
-    parser.add_argument('--post-process-only', action='store_true', help="Chỉ chạy hậu xử lý.")
+    
+    # --- BẮT ĐẦU THAY ĐỔI ---
     parser.add_argument(
-        '--tasks', nargs='?', const='_LIST_TASKS_', default=None, type=str,
+        '-u', '--update-only', action='store_true', 
+        help="Chỉ cập nhật dữ liệu, không chạy hậu xử lý."
+    )
+    parser.add_argument(
+        '-p', '--post-tasks-only', action='store_true', 
+        help="Chỉ chạy các tác vụ hậu xử lý, không cập nhật dữ liệu."
+    )
+    parser.add_argument(
+        '-t', '--tasks', nargs='?', const='_LIST_TASKS_', default=None, type=str,
         help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n"
              "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó."
     )
+    # --- KẾT THÚC THAY ĐỔI ---
+    
     return parser.parse_args()
 
-# --- THAY ĐỔI 3: Hàm riêng để xử lý và kiểm tra giá trị arguments ---
 def _process_and_validate_args(args: argparse.Namespace, config: dict) -> tuple | None:
     """Xử lý, kiểm tra các giá trị argument và trả về các tham số đã được xử lý."""
     available_modules = list(config.keys())
@@ -74,7 +81,7 @@ def _process_and_validate_args(args: argparse.Namespace, config: dict) -> tuple 
     tasks_to_run = None
     if args.tasks is not None:
         if len(modules_to_run) > 1:
-            log.error("'--tasks' chỉ có thể được sử dụng khi chạy một module duy nhất.")
+            log.error("'-t/--tasks' chỉ có thể được sử dụng khi chạy một module duy nhất.")
             return None
         
         single_module = modules_to_run[0]
@@ -90,16 +97,18 @@ def _process_and_validate_args(args: argparse.Namespace, config: dict) -> tuple 
                 log.error(f"Một hoặc nhiều tác vụ không hợp lệ cho module '{single_module}'.")
                 return None
 
-    if args.update_only and args.post_process_only:
-        log.error("Không thể dùng đồng thời '--update-only' và '--post-process-only'.")
+    # --- BẮT ĐẦU THAY ĐỔI ---
+    # Sử dụng 'args.post_tasks_only' thay vì 'args.post_process_only'
+    if args.update_only and args.post_tasks_only:
+        log.error("Không thể dùng đồng thời '-u/--update-only' và '-p/--post-tasks-only'.")
         return None
 
-    run_update = not args.post_process_only
+    run_update = not args.post_tasks_only
     run_post_process = not args.update_only
+    # --- KẾT THÚC THAY ĐỔI ---
     
     return modules_to_run, tasks_to_run, run_update, run_post_process
 
-# --- THAY ĐỔI 4: Hàm main() giờ đây rất gọn gàng ---
 def main():
     """Hàm chính điều phối toàn bộ quy trình."""
     config = load_config(constants.CONFIG_PATH / "updater_config.yaml")
@@ -123,7 +132,6 @@ def main():
 
         handler_func = HANDLER_DISPATCHER.get(module_type)
         if handler_func:
-            # Tất cả các handler giờ đây có cùng một "dấu chân" (footprint)
             handler_func(
                 handler_config, destination_dir,
                 run_update=run_update, run_post_process=run_post_process, tasks_to_run=tasks_to_run
