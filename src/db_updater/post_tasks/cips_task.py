@@ -28,9 +28,11 @@ def process_cips_csv_to_json(config: Dict, project_root: Path):
     # ... (phần khởi tạo không thay đổi) ...
     try:
         tsv_path = project_root / config['path']
-        output_configs = {key: project_root / value
-                          for item in config.get('output', [])
-                          for key, value in item.items()}
+
+        # Lấy dictionary output trực tiếp và xử lý
+        output_data = config.get('output', {})
+        output_configs = {key: project_root / value 
+                        for key, value in output_data.items()}
         
         topic_output_file = output_configs.get('topic-index')
         sutta_output_file = output_configs.get('sutta-index')

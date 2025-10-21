@@ -8,12 +8,12 @@ git:
       cips-json:
         path: data/raw/git/cips/src/data/general-index.csv
         output: 
-          - topic-index: data/raw/git/post_processed/cips/cips_topic.json
-          - sutta-index: data/raw/git/post_processed/cips/cips_sutta.json
+          topic-index: data/processed/prebuild/cips/cips_topic.json
+          sutta-index: data/processed/prebuild/cips/cips_sutta.json
       html_text:
         path: data/raw/git/sc-data/html_text
-        output: data/raw/git/post_processed/sc_html_text_authors.json
         ignore: [zz]
+        output: data/processed/prebuild/sc_html_text_authors.json
       bilara:
         path: data/raw/git/sc-data/sc_bilara_data
         folders: [root, html, reference, variant, translation, comment]
@@ -22,19 +22,19 @@ git:
           - blurb: [blurb]
           - site: [site]
         output: 
-          site: data/raw/git/post_processed/bilara/sc_sites.json
-          blurb: data/raw/git/post_processed/bilara/sc_blurbs.json
-          name: data/raw/git/post_processed/bilara/sc_names.json
-          sutta: data/raw/git/post_processed/bilara/sc_bilara_segments.json
+          site: data/processed/prebuild/bilara/sc_sites.json
+          blurb: data/processed/prebuild/bilara/sc_blurbs.json
+          name: data/processed/prebuild/bilara/sc_names.json
+          sutta: data/processed/prebuild/bilara/sc_bilara_segments.json
       parallels:
         path: data/raw/git/sc-data/relationship/parallels.json
         replacements:
           - ['"mn75.1"', '"mn75#1"']
         output:
-          category: data/raw/git/post_processed/parallels/sc_parallel_category.json
-          segment: data/raw/git/post_processed/parallels/sc_parallel_segment.json
-          flat_segment: data/raw/git/post_processed/parallels/sc_parallel_flat_segment.json
-          book: data/raw/git/post_processed/parallels/sc_parallel_book.json
+          category: data/processed/prebuild/parallels/sc_parallel_category.json
+          segment: data/processed/prebuild/parallels/sc_parallel_segment.json
+          flat_segment: data/processed/prebuild/parallels/sc_parallel_flat_segment.json
+          book: data/processed/prebuild/parallels/sc_parallel_book.json
       # cips-csv:
       #   path: data/raw/git/cips/src/data/general-index.csv
       #   output:
