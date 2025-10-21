@@ -1,4 +1,4 @@
-// Path: /Utilities.gs
+// Path: apps_script/suttaworks/core/Utilities.js
 
 /**
  * Finds ALL sheets that match a regex pattern.

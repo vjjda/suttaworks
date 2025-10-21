@@ -1,4 +1,4 @@
-// Path: /Config.gs
+// Path: apps_script/suttaworks/core/Config.js
 
 /**
  * Reads all configurations from the "Config" sheet and converts them to RegExp objects.

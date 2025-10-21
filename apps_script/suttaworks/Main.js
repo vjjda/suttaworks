@@ -1,4 +1,4 @@
-// Path: /Main.js
+// Path: apps_script/suttaworks/Main.js
 
 /**
  * Creates the main custom menu when the spreadsheet is opened.

@@ -1,4 +1,4 @@
-// Path: /features/annotation/index.js
+// Path: apps_script/suttaworks/features/annotation/index.js
 
 // --- Wrapper Functions (from old Main.js) ---
 
