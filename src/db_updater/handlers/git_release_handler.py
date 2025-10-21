@@ -136,7 +136,7 @@ def process_git_release_data(
         headers = _get_github_headers()
 
         # Tách config cho các repo và config cho 'post'
-        repo_configs = {k: v for k, v in handler_config.items() if k != 'post_tasks:'}
+        repo_configs = {k: v for k, v in handler_config.items() if k != 'post_tasks'}
 
         for item_name, item_config in repo_configs.items():
             # ... (toàn bộ logic xử lý cho mỗi repo giữ nguyên ở đây) ...
@@ -226,8 +226,8 @@ def process_git_release_data(
     # --- Giai đoạn 2: Hậu xử lý ---
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
-        if 'post_tasks:' in handler_config:
-            for task_name in handler_config['post_tasks:']:
+        if 'post_tasks' in handler_config:
+            for task_name in handler_config['post_tasks']:
                 if tasks_to_run is None or task_name in tasks_to_run:
                     log.warning(f"--> Tác vụ '{task_name}' là placeholder, bỏ qua.")
                 else:

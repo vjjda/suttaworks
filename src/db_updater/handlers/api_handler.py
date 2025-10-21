@@ -68,8 +68,8 @@ def process_api_data(
     # --- THAY ĐỔI 2: Gói logic hậu xử lý trong khối `if run_post_process` ---
     if run_post_process:
         log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
-        if 'post_tasks:' in handler_config:
-            for task_name, task_config in handler_config['post_tasks:'].items():
+        if 'post_tasks' in handler_config:
+            for task_name, task_config in handler_config['post_tasks'].items():
                 # --- THAY ĐỔI 3: Kiểm tra tác vụ có được phép chạy không ---
                 if tasks_to_run is None or task_name in tasks_to_run:
                     log.info(f"--> Bắt đầu tác vụ: '{task_name}'...")
