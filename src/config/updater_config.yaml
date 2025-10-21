@@ -8,8 +8,8 @@ git:
       cips-json:
         path: data/raw/git/cips/src/data/general-index.csv
         output: 
-          topic-index: data/processed/prebuild/cips/cips_topic.json
-          sutta-index: data/processed/prebuild/cips/cips_sutta.json
+          topic-index: data/processed/prebuild/cips-json/cips_topic.json
+          sutta-index: data/processed/prebuild/cips-json/cips_sutta.json
       html_text:
         path: data/raw/git/sc-data/html_text
         ignore: [zz]

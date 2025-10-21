@@ -13,21 +13,21 @@ suttacentral-sqlite:
     - ignore:
         - upp-tree.json
   suttaplex: 
-    data: "data/raw/suttaplex/suttaplex.json"
+    data: "data/processed/prebuild/suttaplex-json/suttaplex.json"
     translation_files:
       json_segment:
-        path: "data/raw/git/sc_bilara.json"
+        path: "data/processed/prebuild/bilara/sc_bilara_segments.json"
         groups: [root, translation]
       html_text: 
-        path: "data/raw/git/post_processed/sc_html_text_authors.json"
+        path: "data/processed/prebuild/sc_html_text_authors.json"
     blurb_supplement:
       - data/raw/supplement/blurb_supplement.tsv
   bilara-segment:
     folder: "data/raw/git/sc-data"
     json: 
-      - Bilara_names: "data/raw/git/post_processed/bilara/sc_names.json"
-      - Bilara_blurbs: "data/raw/git/post_processed/bilara/sc_blurbs.json"
-      - Bilara_sites: "data/raw/git/post_processed/bilara/sc_sites.json"
-      - Bilara_segments: "data/raw/git/post_processed/bilara/sc_bilara_segments.json"
+      - Bilara_names: "data/processed/prebuild/bilara/sc_names.json"
+      - Bilara_blurbs: "data/processed/prebuild/bilara/sc_blurbs.json"
+      - Bilara_sites: "data/processed/prebuild/bilara/sc_sites.json"
+      - Bilara_segments: "data/processed/prebuild/bilara/sc_bilara_segments.json"
     author-remap:
       sutta: null
