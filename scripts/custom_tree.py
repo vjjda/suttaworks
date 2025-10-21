@@ -1,11 +1,14 @@
-# Path: scripts/custom_tree.py
 #!/usr/bin/env python3
 import argparse
 import configparser
 from pathlib import Path
 
 # Xác định thư mục gốc của dự án
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path.cwd()
+DEFAULT_IGNORE = {
+    "__pycache__", ".venv", "venv", "node_modules", 
+    "dist", "build", ".git"
+}
 
 def get_submodule_paths(root: Path) -> set:
     """Đọc file .gitmodules và trả về một set các đường dẫn submodule."""
@@ -76,14 +79,15 @@ def main():
     
     args = parser.parse_args()
 
-    default_ignore = { "__pycache__", ".venv", "venv", "node_modules", ".git" }
-    
     submodule_names = set()
     if not args.show_submodules:
         submodule_names = {p.name for p in get_submodule_paths(PROJECT_ROOT)}
         
     custom_ignore = set(args.ignore.split(',')) if args.ignore else set()
-    final_ignore_list = default_ignore.union(custom_ignore)
+    
+    # Sử dụng hằng số DEFAULT_IGNORE mới ở đây
+    final_ignore_list = DEFAULT_IGNORE.union(custom_ignore)
+    
     prune_list = set(args.prune.split(',')) if args.prune else set()
     
     global_dirs_only = args.dirs_only == '_ALL_'
