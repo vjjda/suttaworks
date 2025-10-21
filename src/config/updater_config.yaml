@@ -3,7 +3,7 @@
 git:
   git-submodule:
     cips: https://github.com/thesunshade/CIPS
-    suttacentral-data: https://github.com/suttacentral/sc-data
+    sc-data: https://github.com/suttacentral/sc-data
     post:
       cips-json:
         path: data/raw/git/cips/src/data/general-index.csv
@@ -20,11 +20,11 @@ git:
           - reverse_links: data/raw/git/post_processed/airtable/cips_topic_sutta_links.csv
 
       html_text:
-        path: data/raw/git/suttacentral-data/html_text
+        path: data/raw/git/sc-data/html_text
         output: data/raw/git/post_processed/sc_html_text_authors.json
         ignore: [zz]
       bilara:
-        path: data/raw/git/suttacentral-data/sc_bilara_data
+        path: data/raw/git/sc-data/sc_bilara_data
         folders: [root, html, reference, variant, translation, comment]
         groups:
           - name: [name]
@@ -36,7 +36,7 @@ git:
           name: data/raw/git/post_processed/bilara/sc_names.json
           sutta: data/raw/git/post_processed/bilara/sc_bilara_segments.json
       parallels:
-        path: data/raw/git/suttacentral-data/relationship/parallels.json
+        path: data/raw/git/sc-data/relationship/parallels.json
         replacements:
           - ['"mn75.1"', '"mn75#1"']
         output:

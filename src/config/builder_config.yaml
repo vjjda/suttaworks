@@ -4,12 +4,12 @@ suttacentral-sqlite:
   path: "data/processed"
   name: suttacentral.sqlite
   # Hierarchy
-  bibliography: "data/raw/git/suttacentral-data/additional-info/biblio.json"
+  bibliography: "data/raw/git/sc-data/additional-info/biblio.json"
   tree: 
-    - super-tree: "data/raw/git/suttacentral-data/structure/tree/super-tree.json"
-    - sutta: "data/raw/git/suttacentral-data/structure/tree/sutta"
-    - vinaya: "data/raw/git/suttacentral-data/structure/tree/vinaya"
-    - abhidhamma: "data/raw/git/suttacentral-data/structure/tree/abhidhamma"
+    - super-tree: "data/raw/git/sc-data/structure/tree/super-tree.json"
+    - sutta: "data/raw/git/sc-data/structure/tree/sutta"
+    - vinaya: "data/raw/git/sc-data/structure/tree/vinaya"
+    - abhidhamma: "data/raw/git/sc-data/structure/tree/abhidhamma"
     - ignore:
         - upp-tree.json
   suttaplex: 
@@ -23,7 +23,7 @@ suttacentral-sqlite:
     blurb_supplement:
       - data/raw/supplement/blurb_supplement.tsv
   bilara-segment:
-    folder: "data/raw/git/suttacentral-data"
+    folder: "data/raw/git/sc-data"
     json: 
       - Bilara_names: "data/raw/git/post_processed/bilara/sc_names.json"
       - Bilara_blurbs: "data/raw/git/post_processed/bilara/sc_blurbs.json"
