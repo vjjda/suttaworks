@@ -21,7 +21,6 @@ def get_submodule_paths(root: Path) -> set:
             config.read(gitmodules_path)
             for section in config.sections():
                 if config.has_option(section, "path"):
-                    # Chuyển đổi thành đường dẫn tuyệt đối để so sánh
                     submodule_paths.add((root / config.get(section, "path")).resolve())
         except configparser.Error as e:
             log.warning(f"Không thể đọc file .gitmodules: {e}")
@@ -30,13 +29,12 @@ def get_submodule_paths(root: Path) -> set:
 def run_update(target_dir: Path):
     """
     Quét và cập nhật hoặc thêm comment # Path:, bỏ qua các thư mục được chỉ định,
-    submodules, và file __init__.py rỗng.
+    submodules, và bất kỳ file .py rỗng nào.
     """
     if not target_dir.is_dir():
         log.error(f"Lỗi: Không tìm thấy thư mục mục tiêu: {target_dir}")
         return
 
-    # --- BẮT ĐẦU THAY ĐỔI 1: Lấy danh sách submodule và thư mục loại trừ ---
     submodule_paths = get_submodule_paths(PROJECT_ROOT)
     excluded_dirs = {".venv", "venv", "__pycache__", ".git"}
     
@@ -50,19 +48,13 @@ def run_update(target_dir: Path):
     files_to_process = []
     for file_path in all_files:
         abs_file_path = file_path.resolve()
-        
-        # Kiểm tra xem có nằm trong thư mục loại trừ cơ bản không
         is_in_excluded_dir = any(part in excluded_dirs for part in file_path.relative_to(PROJECT_ROOT).parts)
         if is_in_excluded_dir:
             continue
-
-        # Kiểm tra xem có nằm trong submodule không
         is_in_submodule = any(abs_file_path.is_relative_to(p) for p in submodule_paths)
         if is_in_submodule:
             continue
-            
         files_to_process.append(file_path)
-    # --- KẾT THÚC THAY ĐỔI 1 ---
 
     processed_count = 0
     if not files_to_process:
@@ -78,18 +70,18 @@ def run_update(target_dir: Path):
             with file_path.open('r', encoding='utf-8') as f:
                 lines = f.readlines()
 
+            # --- BẮT ĐẦU THAY ĐỔI: Bỏ qua BẤT KỲ file .py rỗng nào ---
             is_empty_or_whitespace = all(not line.strip() for line in lines)
-            if file_path.name == "__init__.py" and is_empty_or_whitespace:
-                log.info(f"  -> Bỏ qua file __init__.py rỗng: {relative_path.as_posix()}")
+            if is_empty_or_whitespace:
+                log.info(f"  -> Bỏ qua file rỗng: {relative_path.as_posix()}")
                 continue
+            # --- KẾT THÚC THAY ĐỔI ---
             
             correct_comment = f"# Path: {relative_path.as_posix()}\n"
             action = None
             
-            if not lines:
-                action = "Thêm"
-                lines.append(correct_comment)
-            elif lines[0].strip().startswith("# Path:"):
+            # Logic cũ cho file rỗng đã được loại bỏ, vì nó được xử lý ở trên
+            if lines[0].strip().startswith("# Path:"):
                 if lines[0] != correct_comment:
                     action = "Cập nhật"
                     lines[0] = correct_comment
