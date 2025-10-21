@@ -1,5 +1,4 @@
 # Path: src/db_builder/config_loader.py
-#!/usr/bin/env python3
 
 import yaml
 import logging
