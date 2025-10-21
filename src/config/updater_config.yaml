@@ -10,16 +10,6 @@ git:
         output: 
           - topic-index: data/raw/git/post_processed/cips/cips_topic.json
           - sutta-index: data/raw/git/post_processed/cips/cips_sutta.json
-          
-      # cips-csv:
-      #   path: data/raw/git/cips/src/data/general-index.csv
-      #   output:
-      #     - topics: data/raw/git/post_processed/airtable/cips_topics.csv
-      #     - suttas: data/raw/git/post_processed/airtable/cips_suttas.csv
-      #     - segments: data/raw/git/post_processed/airtable/cips_segments.csv
-      #     - links: data/raw/git/post_processed/airtable/cips_sutta_topic_links.csv # <-- DÒNG MỚI
-      #     - reverse_links: data/raw/git/post_processed/airtable/cips_topic_sutta_links.csv
-
       html_text:
         path: data/raw/git/sc-data/html_text
         output: data/raw/git/post_processed/sc_html_text_authors.json
@@ -45,6 +35,16 @@ git:
           segment: data/raw/git/post_processed/parallels/sc_parallel_segment.json
           flat_segment: data/raw/git/post_processed/parallels/sc_parallel_flat_segment.json
           book: data/raw/git/post_processed/parallels/sc_parallel_book.json
+      # cips-csv:
+      #   path: data/raw/git/cips/src/data/general-index.csv
+      #   output:
+      #     - topics: data/raw/git/post_processed/airtable/cips_topics.csv
+      #     - suttas: data/raw/git/post_processed/airtable/cips_suttas.csv
+      #     - segments: data/raw/git/post_processed/airtable/cips_segments.csv
+      #     - links: data/raw/git/post_processed/airtable/cips_sutta_topic_links.csv # <-- DÒNG MỚI
+      #     - reverse_links: data/raw/git/post_processed/airtable/cips_topic_sutta_links.csv
+          
+
 release:
   git-release:
     dpd:
