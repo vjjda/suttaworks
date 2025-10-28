@@ -1,0 +1,22 @@
+[tree]
+show-submodules = false
+use-gitignore = true
+ignore = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    "venv",
+    "*.log"
+]
+prune = [
+    "sutta_tsv",
+    "dhammatalks",
+    "buddha-words",
+    "tamtangpaliviet",
+    "**/suttaplex/update",
+    "dist",
+    "build",
+    "**/dpd/dpd-kindle"
+]
+dirs-only = []

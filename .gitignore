@@ -15,7 +15,7 @@ __pycache__/
 /data/raw/*
 
 # NHƯNG đừng bỏ qua thư mục git-submodule
-!/data/raw/git-submodule
+!/data/raw/git
 
 /data/processed/*
 
