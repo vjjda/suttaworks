@@ -166,7 +166,7 @@ function getSuttaJsonString() {
 
     Logger.log('Cache MISS. Fetching data from public GitHub URL.');
     
-    const JSON_DATA_URL = "https://raw.githubusercontent.com/vjjda/suttaworks/main/data/public/cips/cips_sutta.json";
+    const JSON_DATA_URL = "https://raw.githubusercontent.com/vjjda/misc/main/data/cips/cips_sutta.json";
     
     const options = {
       'muteHttpExceptions': true
