@@ -5,7 +5,7 @@ from typing import List
 
 current_dir = Path(__file__).parent
 
-# Kỹ thuật 1: Liệt kê tường minh các module con cần expose
+
 modules_to_export: List[str] = [
     "parallels_processor",
     "parallels_transformer",
@@ -20,19 +20,18 @@ for module_name in modules_to_export:
 
         if hasattr(module, "__all__"):
             public_symbols = getattr(module, "__all__")
-            # Đẩy các symbols từ __all__ của module con lên globals() của package
+
             for name in public_symbols:
                 obj = getattr(module, name)
                 globals()[name] = obj
-            # Thêm vào __all__ của package
+
             __all__.extend(public_symbols)
 
     except ImportError as e:
-        # In cảnh báo nếu module không import được
+
         print(f"Cảnh báo: Không thể import từ {module_name}: {e}")
 
 
-# Dọn dẹp namespace của package
 del Path, import_module, List, current_dir, modules_to_export, module_name
 if "module" in locals():
     del module

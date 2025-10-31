@@ -2,7 +2,12 @@
 from collections import defaultdict
 from . import parallels_utils
 
-__all__ = ["invert_to_segment_structure", "flatten_segment_map", "create_book_structure"]
+__all__ = [
+    "invert_to_segment_structure",
+    "flatten_segment_map",
+    "create_book_structure",
+]
+
 
 def invert_to_segment_structure(category_map: dict) -> defaultdict:
     segment_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))

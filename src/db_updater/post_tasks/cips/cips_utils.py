@@ -8,8 +8,8 @@ __all__ = ["write_json_file"]
 
 log = logging.getLogger(__name__)
 
+
 def write_json_file(data: Dict, output_file: Path, file_type: str):
-    """Writes a dictionary to a JSON file."""
     if not data:
         log.warning(f"Không có dữ liệu để ghi cho file {file_type}.")
         return
