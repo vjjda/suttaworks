@@ -50,3 +50,29 @@ clean_extensions = ["py", "sh", "zsh"]
 # (Hiện chưa có cờ CLI để sửa đổi danh sách này)
 # Ví dụ: format_extensions = ["py"]
 format_extensions = ["py"]
+
+[sgen]
+
+# ignore (List[str]): Các pattern (giống .gitignore) để bỏ qua khi quét.
+# Các pattern này sẽ được NỐI VÀO danh sách mặc định của script.
+# Ví dụ: ignore = ["*_test.py", "**/legacy/*"]
+# Mặc định (được thêm vào): {toml_ignore}
+ignore = ["*.pyc", "*.pyo", ".git", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+# include (List[str]): Bộ lọc dương. Chỉ xử lý các file khớp với pattern này.
+# Hoạt động sau khi đã áp dụng 'restrict' và 'ignore'.
+# Các pattern này sẽ được NỐI VÀO danh sách mặc định (thường là rỗng).
+# Ví dụ: include = ["modules/core/**", "utils/network.py"]
+# Mặc định (được thêm vào): {toml_include}
+include = []
+
+# --- Cấu hình nâng cao (Ít khi cần thay đổi) ---
+
+# dynamic_import_indicators (List[str]): Các chuỗi code nhận diện gateway động.
+dynamic_import_indicators = ["globals()[name]", "globals().update"]
+
+# ast_module_list_name (str): Tên biến list chứa danh sách submodule trong AST.
+ast_module_list_name = "modules_to_export"
+
+# ast_all_list_name (str): Tên biến list __all__ trong AST của submodule.
+ast_all_list_name = "__all__"
