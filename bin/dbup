@@ -1,25 +1,62 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env python
 # Path: bin/dbup
-#
-# File wrapper này sử dụng đường dẫn tương đối.
-# Toàn bộ project (bao gồm cả wrapper này) có thể được di chuyển cùng nhau.
-# CẢNH BÁO: KHÔNG di chuyển file này. Hãy dùng symlink nếu cần.
-# 1. Find the project root
-SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
-PROJECT_ROOT=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)
+import os
+import sys
+from pathlib import Path
 
-# --- Relative Paths (Calculated by zrap) ---
-VENV_PATH="$PROJECT_ROOT/.venv"
-SCRIPT_TO_RUN="$PROJECT_ROOT/src/db_updater/__main__.py"
-# --- END PATHS ---
+# This script is a Python wrapper for src/db_updater/__main__.py
+# It ensures that the script is run with the correct virtual environment
+# and that the project root is in the Python path.
+# Using a Python wrapper is necessary for argcomplete to work correctly.
 
-# 2. Activate virtual environment
-if [ -d "$VENV_PATH" ];
-then
-    source "$VENV_PATH/bin/activate"
-else
-    echo "⚠️ Cảnh báo: Không tìm thấy môi trường ảo tại $VENV_PATH. Đang sử dụng Python hệ thống."
-fi
+def main():
+    # 1. Find the project root
+    try:
+        # Assumes this script is in project_root/bin/
+        script_path = Path(os.path.realpath(__file__))
+        project_root = script_path.parent.parent
+    except NameError:
+        # __file__ is not defined in some contexts (e.g. interactive interpreter)
+        # Fallback to current working directory, but this might be less reliable.
+        project_root = Path(os.getcwd())
 
-# 3. Run the main Python script
-PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH" python "$SCRIPT_TO_RUN" "$@"
+
+    # 2. Activate virtual environment by re-executing with the venv's Python
+    venv_python_path = project_root / ".venv" / "bin" / "python"
+
+    # Check if we are already running in the venv
+    is_in_venv = sys.executable == str(venv_python_path)
+
+    if not is_in_venv and venv_python_path.exists():
+        # The script is not running in the venv, so we re-launch it with the venv's python
+        try:
+            os.execv(str(venv_python_path), [str(venv_python_path), str(script_path)] + sys.argv[1:])
+            # os.execv replaces the current process, so this script will not continue
+            # after this line if the re-execution is successful.
+        except Exception as e:
+            print(f"⚠️ Lỗi khi thực thi lại bằng môi trường ảo: {e}", file=sys.stderr)
+            # Continue with system python if exec fails
+    elif not venv_python_path.exists():
+        print(f"⚠️ Cảnh báo: Không tìm thấy môi trường ảo tại {venv_python_path}. Đang sử dụng Python hệ thống.", file=sys.stderr)
+
+
+    # 3. Run the main Python script
+    # Add project root to the path to allow for absolute imports from src
+    sys.path.insert(0, str(project_root))
+
+    try:
+        # Import and run the main function from the db_updater module.
+        # This module contains the argcomplete setup.
+        from src.db_updater.__main__ import main as db_updater_main
+        db_updater_main()
+    except ImportError as e:
+        print(f"❌ Lỗi: Không thể import module db_updater. Hãy chắc chắn rằng cấu trúc thư mục là chính xác.", file=sys.stderr)
+        print(f"Lỗi chi tiết: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Lỗi không xác định khi chạy db_updater: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
