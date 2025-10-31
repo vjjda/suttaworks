@@ -3,11 +3,18 @@ import logging
 from typing import Dict
 
 from src.config import constants
-from . import cips
+# Thay đổi: Import trực tiếp các hàm từ package 'cips'
+from .cips import (
+    process_tsv,
+    sort_topic_index,
+    sort_sutta_index,
+    write_json_file,
+)
 
 __all__ = ["run"]
 
 log = logging.getLogger(__name__)
+
 
 def run(task_config: Dict):
     """Orchestrates the CIPS data processing task by calling the refactored modules."""
@@ -18,8 +25,8 @@ def run(task_config: Dict):
         topic_output_file = project_root / task_config["output"]["topic-index"]
         sutta_output_file = project_root / task_config["output"]["sutta-index"]
 
-        if not tsv_path.is_file():
-            log.error(f"File TSV nguồn không tồn tại: {tsv_path}")
+        if not tsv_path.is_file(): 
+            log.error(f"File TSV nguồn không tồn tại: {tsv_path}") 
             return
 
     except KeyError as e:
@@ -28,19 +35,22 @@ def run(task_config: Dict):
 
     # 2. Process the TSV and build indexes
     log.info(f"Bắt đầu xử lý file TSV để tạo 2 chỉ mục từ: {tsv_path}")
-    topic_index, sutta_index = cips.process_tsv(tsv_path)
+    # Bỏ prefix 'cips.'
+    topic_index, sutta_index = process_tsv(tsv_path)
 
-    if not topic_index and not sutta_index:
-        log.warning("Không có dữ liệu nào được xử lý từ file TSV.")
+    if not topic_index and not sutta_index: 
+        log.warning("Không có dữ liệu nào được xử lý từ file TSV.") 
         return
 
     # 3. Sort the indexes
     log.info("Đang sắp xếp dữ liệu chỉ mục...")
-    sorted_topic_index = cips.sort_topic_index(topic_index)
-    sorted_sutta_index = cips.sort_sutta_index(sutta_index)
+    # Bỏ prefix 'cips.'
+    sorted_topic_index = sort_topic_index(topic_index)
+    sorted_sutta_index = sort_sutta_index(sutta_index)
 
     # 4. Write the output files
-    cips.write_json_file(sorted_topic_index, topic_output_file, "topic-index")
-    cips.write_json_file(sorted_sutta_index, sutta_output_file, "sutta-index")
+    # Bỏ prefix 'cips.'
+    write_json_file(sorted_topic_index, topic_output_file, "topic-index")
+    write_json_file(sorted_sutta_index, sutta_output_file, "sutta-index")
 
     log.info("Hoàn tất tác vụ CIPS.")

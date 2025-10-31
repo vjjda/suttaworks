@@ -4,11 +4,19 @@ import logging
 from pathlib import Path
 
 from src.config import constants
-from . import parallels
+# Thay đổi: Import trực tiếp các hàm từ package 'parallels'
+from .parallels import (
+    build_initial_map,
+    create_book_structure,
+    flatten_segment_map,
+    invert_to_segment_structure,
+    sort_data_naturally,
+)
 
 __all__ = ["run"]
 
 log = logging.getLogger(__name__)
+
 
 def run(task_config: dict):
     """Orchestrates the parallels data processing task."""
@@ -20,7 +28,7 @@ def run(task_config: dict):
 
         paths = {
             key: project_root / path
-            for key, path in output_config.items()
+            for key, path in output_config.items() 
             if key in ["category", "segment", "flat_segment", "book"]
         }
 
@@ -29,8 +37,8 @@ def run(task_config: dict):
             return
 
         log.info(f"Bắt đầu xử lý file parallels: {input_path}")
-        if not input_path.exists():
-            log.error(f"Không tìm thấy file input: {input_path}")
+        if not input_path.exists(): 
+            log.error(f"Không tìm thấy file input: {input_path}") 
             return
 
         with open(input_path, "r", encoding="utf-8") as f:
@@ -38,43 +46,49 @@ def run(task_config: dict):
 
         if replacements:
             log.info(f"Thực hiện {len(replacements)} thay thế văn bản từ config...")
-            for find, replace in replacements:
-                raw_content = raw_content.replace(find, replace)
+            for find, replace in replacements: 
+                raw_content = raw_content.replace(find, replace) 
 
         data = json.loads(raw_content)
 
         # 1. Build initial map
-        sutta_map = parallels.build_initial_map(data)
+        # Bỏ prefix 'parallels.'
+        sutta_map = build_initial_map(data)
 
         # 2. Save category data if requested
         if "category" in paths:
-            category_data = parallels.sort_data_naturally(sutta_map)
-            _write_json(category_data, paths["category"], "Category")
+            # Bỏ prefix 'parallels.'
+            category_data = sort_data_naturally(sutta_map)
+            _write_json(category_data, paths["category"], "Category") 
 
         # 3. Transform and save other formats if requested
         if any(key in paths for key in ["segment", "flat_segment", "book"]):
-            segment_map = parallels.invert_to_segment_structure(sutta_map)
-            segment_data = parallels.sort_data_naturally(segment_map)
+            # Bỏ prefix 'parallels.'
+            segment_map = invert_to_segment_structure(sutta_map)
+            segment_data = sort_data_naturally(segment_map)
 
             if "segment" in paths:
                 _write_json(segment_data, paths["segment"], "Segment")
 
-            if "flat_segment" in paths:
-                flat_map = parallels.flatten_segment_map(segment_data)
-                flat_data = parallels.sort_data_naturally(flat_map)
-                _write_json(flat_data, paths["flat_segment"], "Flat Segment")
+            if "flat_segment" in paths: 
+                # Bỏ prefix 'parallels.'
+                flat_map = flatten_segment_map(segment_data) 
+                flat_data = sort_data_naturally(flat_map) 
+                _write_json(flat_data, paths["flat_segment"], "Flat Segment") 
 
-            if "book" in paths:
-                book_map = parallels.create_book_structure(segment_data)
-                book_data = parallels.sort_data_naturally(book_map)
-                _write_json(book_data, paths["book"], "Book")
+            if "book" in paths: 
+                # Bỏ prefix 'parallels.'
+                book_map = create_book_structure(segment_data) 
+                book_data = sort_data_naturally(book_map) 
+                _write_json(book_data, paths["book"], "Book") 
 
     except Exception as e:
         log.exception(f"Đã xảy ra lỗi không mong muốn khi xử lý parallels: {e}")
+
 
 def _write_json(data: dict, path: Path, file_type: str):
     """Helper to write data to a JSON file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    log.info(f"✅ Đã lưu file {file_type} vào: {path}")
+        json.dump(data, f, ensure_ascii=False, indent=2) 
+    log.info(f"✅ Đã lưu file {file_type} vào: {path}") 
