@@ -6,19 +6,11 @@ from pathlib import Path
 
 from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
-from src.db_updater.handlers import (
-    api_handler,
-    git_handler,
-    git_release_handler,
-)
 from src.db_updater.handlers.git_release_handler import GitReleaseHandler
 from src.db_updater.handlers.git_handler import GitHandler
 from src.db_updater.handlers.api_handler import ApiHandler
 from src.db_updater.handlers.gdrive_handler import GDriveHandler
 from src.config import constants
-
-setup_logging("db_updater.log")
-log = logging.getLogger(__name__)
 
 HANDLER_DISPATCHER = {
     "git-submodule": GitHandler,
@@ -43,7 +35,7 @@ def get_available_tasks(config: dict, module_name: str) -> list[str]:
     return list(dict.fromkeys(tasks))
 
 
-def _setup_and_parse_args(available_modules: list[str]) -> argparse.Namespace:
+def _setup_and_parse_args(available_modules: list[str]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Công cụ dòng lệnh để cập nhật dữ liệu thô.",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -81,10 +73,10 @@ def _setup_and_parse_args(available_modules: list[str]) -> argparse.Namespace:
         "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó.",
     )
 
-    return parser.parse_args()
+    return parser
 
 
-def _process_and_validate_args(args: argparse.Namespace, config: dict) -> tuple | None:
+def _process_and_validate_args(args: argparse.Namespace, config: dict, log: logging.Logger) -> tuple | None:
     available_modules = list(config.keys())
 
     if args.module == "_LIST_MODULES_":
@@ -143,13 +135,38 @@ def _process_and_validate_args(args: argparse.Namespace, config: dict) -> tuple 
 
 
 def main():
-    config = load_config(constants.CONFIG_PATH / "updater_config.yaml")
-    if not config:
+    # Perform a preliminary parse to check for the help flag (-h, --help)
+    # This avoids loading config and setting up logging when just displaying help.
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument('-h', '--help', action='store_true', default=False)
+    pre_args, _ = pre_parser.parse_known_args()
+
+    # Now, load the configuration
+    config_path = constants.CONFIG_PATH / "updater_config.yaml"
+    config = load_config(config_path)
+
+    # If help is requested, show the full help message (which needs config) and exit.
+    if pre_args.help:
+        parser = _setup_and_parse_args(list(config.keys()) if config else [])
+        parser.print_help()
         return
 
-    args = _setup_and_parse_args(list(config.keys()))
+    # If we proceed, it means no help flag was given. Now, set up logging.
+    setup_logging("db_updater.log")
+    log = logging.getLogger(__name__)
+    
+    # Log the config loading now
+    log.info(f"Đang đọc cấu hình từ: {config_path}")
 
-    processed_args = _process_and_validate_args(args, config)
+    if not config:
+        log.error("Không thể tải cấu hình. Dừng chương trình.")
+        return
+
+    # Perform the full argument parsing
+    parser = _setup_and_parse_args(list(config.keys()))
+    args = parser.parse_args()
+
+    processed_args = _process_and_validate_args(args, config, log)
     if not processed_args:
         return
 
@@ -164,36 +181,24 @@ def main():
         module_type = list(module_config.keys())[0]
         handler_config = module_config[module_type]
 
-        handler_class_or_func = HANDLER_DISPATCHER.get(module_type)
+        handler_class = HANDLER_DISPATCHER.get(module_type)
 
-        if not handler_class_or_func:
+        if not handler_class:
             log.warning(f"Không tìm thấy handler cho loại module '{module_type}'.")
             continue
 
         try:
-            # Kiểm tra xem đó là class hay function để tương thích ngược
-            if isinstance(handler_class_or_func, type):
-                # Là class (cấu trúc mới)
-                handler_instance = handler_class_or_func(handler_config, destination_dir)
-                handler_instance.process(
-                    run_update=run_update,
-                    run_post_process=run_post_process,
-                    tasks_to_run=tasks_to_run,
-                )
-            else:
-                # Là function (cấu trúc cũ)
-                handler_class_or_func(
-                    handler_config,
-                    destination_dir,
-                    run_update=run_update,
-                    run_post_process=run_post_process,
-                    tasks_to_run=tasks_to_run,
-                )
+            handler_instance = handler_class(handler_config, destination_dir)
+            handler_instance.process(
+                run_update=run_update,
+                run_post_process=run_post_process,
+                tasks_to_run=tasks_to_run,
+            )
         except Exception:
             log.critical(f"Lỗi nghiêm trọng khi xử lý module '{module_name}'.", exc_info=True)
 
-
     log.info("Hoàn tất!")
+
 
 
 if __name__ == "__main__":

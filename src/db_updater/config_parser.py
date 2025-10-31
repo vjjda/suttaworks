@@ -7,10 +7,10 @@ log = logging.getLogger(__name__)
 
 
 def load_config(config_path: Path) -> dict | None:
-    log.info(f"Đang đọc cấu hình từ: {config_path}")
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
     except FileNotFoundError:
+        # Log error if file not found, but don't log success.
         log.error(f"Không tìm thấy file cấu hình tại: {config_path}")
         return None
