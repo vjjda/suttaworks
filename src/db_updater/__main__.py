@@ -1,6 +1,7 @@
 # Path: src/db_updater/__main__.py
 import argparse
 import logging
+import argcomplete
 
 from src.config.logging_config import setup_logging
 from src.config import constants
@@ -20,23 +21,23 @@ HANDLER_DISPATCHER = {
 
 
 def main():
-    # Perform a preliminary parse to check for the help flag (-h, --help)
-    pre_parser = argparse.ArgumentParser(add_help=False)
-    pre_parser.add_argument('-h', '--help', action='store_true', default=False)
-    pre_args, _ = pre_parser.parse_known_args()
-
+    # Load config first, as it's needed for parser setup
     config_path = constants.CONFIG_PATH / "updater_config.yaml"
     config = load_config(config_path)
 
-    # Setup parser with config for full help message
-    # We create a dummy logger here just for the arg handler, as real logging is set up later
+    # Setup parser
+    # A dummy logger is used here, as full logging is set up only after we know
+    # we are not just doing a help or autocomplete call.
     arg_handler = CliArgsHandler(config, log=logging.getLogger(__name__))
 
-    if pre_args.help:
-        arg_handler.parser.print_help()
-        return
+    # Activate argcomplete. This will handle completion requests and exit.
+    argcomplete.autocomplete(arg_handler.parser)
 
-    # If not called for help, set up proper logging
+    # Now, parse the arguments. This will also handle -h/--help and exit.
+    args = arg_handler.parse_args()
+
+    # If we've reached this point, we are running the main logic.
+    # Now we can set up proper logging.
     setup_logging("db_updater.log")
     log = logging.getLogger(__name__)
     log.info(f"Đang đọc cấu hình từ: {config_path}")
@@ -45,9 +46,8 @@ def main():
         log.error("Không thể tải cấu hình. Dừng chương trình.")
         return
 
-    # Re-initialize arg_handler with the real logger
-    arg_handler = CliArgsHandler(config, log)
-    processed_args = arg_handler.parse()
+    # Validate the parsed arguments
+    processed_args = arg_handler.validate_args(args)
 
     if not processed_args:
         return

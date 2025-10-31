@@ -71,9 +71,10 @@ class CliArgsHandler:
             tasks.extend(handler_config["post_tasks"].keys())
         return list(dict.fromkeys(tasks))
 
-    def parse(self) -> ParsedArgs | None:
-        args = self.parser.parse_args()
+    def parse_args(self) -> argparse.Namespace:
+        return self.parser.parse_args()
 
+    def validate_args(self, args: argparse.Namespace) -> ParsedArgs | None:
         if args.module == "_LIST_MODULES_":
             self.log.info("Các module có sẵn:")
             for mod in self.available_modules:
@@ -97,7 +98,7 @@ class CliArgsHandler:
         if args.tasks is not None:
             if len(modules_to_run) > 1:
                 self.log.error(
-                    "-t/--tasks chỉ có thể được sử dụng khi chạy một module duy nhất."
+                    "'-t/--tasks' chỉ có thể được sử dụng khi chạy một module duy nhất."
                 )
                 return None
 
