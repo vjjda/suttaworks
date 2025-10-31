@@ -1,12 +1,12 @@
-# Path: src/db_builder/main.py
+# Path: src/db_builder/__main__.py
 
 import logging
-import argparse
 from pathlib import Path
 
 from src.config.constants import PROJECT_ROOT, CONFIG_PATH
 from src.config.logging_config import setup_logging
-from src.db_builder.config_loader import load_config
+from src.db_builder.db_builder_config_parser import load_config
+from src.db_builder.db_builder_arg_parser import BuilderArgsParser
 from src.db_builder.database_manager import DatabaseManager
 from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
 from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
@@ -17,22 +17,13 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-
-    parser = argparse.ArgumentParser(
-        description="Công cụ xây dựng database SuttaCentral."
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Xóa file database hiện có trước khi xây dựng lại.",
-    )
-    args = parser.parse_args()
+    arg_parser = BuilderArgsParser()
+    args = arg_parser.parse()
 
     setup_logging("db_builder.log")
     logger.info("▶️  Bắt đầu chương trình xây dựng database...")
 
     try:
-
         config_file_path = CONFIG_PATH / "builder_config.yaml"
         db_config = load_config(config_file_path)
 
@@ -47,7 +38,6 @@ def main():
         logger.info(f"Database sẽ được tạo tại: {db_path}")
 
         with DatabaseManager(db_path) as db_manager:
-
             logger.info("--- Bắt đầu tạo cấu trúc bảng cho database ---")
             main_schema_path = PROJECT_ROOT / "src/db_builder/suttacentral_schema.sql"
             db_manager.create_tables_from_schema(main_schema_path)
