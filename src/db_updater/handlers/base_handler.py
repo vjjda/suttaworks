@@ -37,11 +37,13 @@ class BaseHandler(ABC):
         """
         Tìm và chạy một tác vụ hậu xử lý cụ thể.
         """
-        if task_name not in self.post_tasks_config:
-            log.warning(f"Tác vụ '{task_name}' không được định nghĩa trong cấu hình cho handler này.")
+        task_config = self.post_tasks_config.get(task_name)
+
+        # Bỏ qua nếu task chỉ là placeholder (giá trị là null trong YAML)
+        if not task_config:
+            log.warning(f"Tác vụ '{task_name}' không có cấu hình hoặc là placeholder. Bỏ qua.")
             return
 
-        task_config = self.post_tasks_config[task_name]
         module_name = task_config.get("module")
         if not module_name:
             log.error(f"Cấu hình cho tác vụ '{task_name}' bị thiếu 'module'.")
