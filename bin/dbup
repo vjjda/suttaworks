@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+# Path: bin/dbup
+#
+# File wrapper này sử dụng đường dẫn tương đối.
+# Toàn bộ project (bao gồm cả wrapper này) có thể được di chuyển cùng nhau.
+# CẢNH BÁO: KHÔNG di chuyển file này. Hãy dùng symlink nếu cần.
+# 1. Find the project root
+SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
+PROJECT_ROOT=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)
+
+# --- Relative Paths (Calculated by zrap) ---
+VENV_PATH="$PROJECT_ROOT/.venv"
+SCRIPT_TO_RUN="$PROJECT_ROOT/src/db_updater/main.py"
+# --- END PATHS ---
+
+# 2. Activate virtual environment
+if [ -d "$VENV_PATH" ];
+then
+    source "$VENV_PATH/bin/activate"
+else
+    echo "⚠️ Cảnh báo: Không tìm thấy môi trường ảo tại $VENV_PATH. Đang sử dụng Python hệ thống."
+fi
+
+# 3. Run the main Python script
+PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH" python "$SCRIPT_TO_RUN" "$@"
