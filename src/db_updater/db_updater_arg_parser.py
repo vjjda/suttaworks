@@ -43,18 +43,18 @@ class CliArgsHandler:
             action="store_true",
             help="Chỉ chạy các tác vụ hậu xử lý, không cập nhật dữ liệu.",
         )
-        parser.add_argument(
-            "-t",
-            "--tasks",
-            nargs="?",
-            const="_LIST_TASKS_",
-            default=None,
-            type=str,
-            help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n" 
-            "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó.",
-        )
-        return parser
-
+                tasks_arg = parser.add_argument(
+                    "-t",
+                    "--tasks",
+                    nargs="?",
+                    const="_LIST_TASKS_",
+                    default=None,
+                    type=str,
+                    help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n"
+                    "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó.",
+                )
+                tasks_arg.completer = self._task_completer
+                return parser
     def get_available_tasks(self, module_name: str) -> list[str]:
         tasks = []
         module_config = self.config.get(module_name, {})
@@ -68,6 +68,13 @@ class CliArgsHandler:
         ):
             tasks.extend(handler_config["post_tasks"].keys())
         return list(dict.fromkeys(tasks))
+
+    def _task_completer(self, prefix, parsed_args, **kwargs):
+        """Custom completer for the --tasks argument."""
+        if parsed_args.module and parsed_args.module != "all":
+            module_name = parsed_args.module.split(",")[0]
+            return self.get_available_tasks(module_name)
+        return []
 
     def parse_args(self) -> argparse.Namespace:
         return self.parser.parse_args()
