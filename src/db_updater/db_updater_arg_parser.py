@@ -1,4 +1,4 @@
-# Path: src/db_updater/arg_parser.py
+# Path: src/db_updater/db_updater_arg_parser.py
 import argparse
 import logging
 from dataclasses import dataclass
@@ -27,11 +27,8 @@ class CliArgsHandler:
         parser.add_argument(
             "-m",
             "--module",
-            nargs="?",
-            const="_LIST_MODULES_",
             default=None,
-            help="Tên module cần cập nhật (e.g., 'git', 'git,suttaplex', 'all').\n"
-            "Nếu gọi không có giá trị, sẽ liệt kê các module có sẵn.",
+            help="Tên module cần cập nhật (e.g., 'git', 'git,suttaplex', 'all').",
         )
         parser.add_argument(
             "-u",
@@ -52,7 +49,7 @@ class CliArgsHandler:
             const="_LIST_TASKS_",
             default=None,
             type=str,
-            help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n"
+            help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n" 
             "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó.",
         )
         return parser
@@ -75,14 +72,9 @@ class CliArgsHandler:
         return self.parser.parse_args()
 
     def validate_args(self, args: argparse.Namespace) -> ParsedArgs | None:
-        if args.module == "_LIST_MODULES_":
-            self.log.info("Các module có sẵn:")
-            for mod in self.available_modules:
-                print(f"- {mod}")
-            return None
-
         if args.module is None:
             self.log.error("Argument -m/--module là bắt buộc.")
+            self.parser.print_help()
             return None
 
         modules_to_run = (
@@ -98,7 +90,7 @@ class CliArgsHandler:
         if args.tasks is not None:
             if len(modules_to_run) > 1:
                 self.log.error(
-                    "'-t/--tasks' chỉ có thể được sử dụng khi chạy một module duy nhất."
+                    "-t/--tasks' chỉ có thể được sử dụng khi chạy một module duy nhất."
                 )
                 return None
 
