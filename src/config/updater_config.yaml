@@ -6,15 +6,18 @@ git:
     sc-data: https://github.com/suttacentral/sc-data
     post_tasks:
       cips-json:
+        module: cips_task
         path: data/raw/git/cips/src/data/general-index.csv
         output: 
           topic-index: data/processed/prebuild/cips-json/cips_topic.json
           sutta-index: data/processed/prebuild/cips-json/cips_sutta.json
       html_text:
+        module: html_text_authors_task
         path: data/raw/git/sc-data/html_text
         ignore: [zz]
         output: data/processed/prebuild/sc_html_text_authors.json
       bilara:
+        module: bilara_task
         path: data/raw/git/sc-data/sc_bilara_data
         folders: [root, html, reference, variant, translation, comment]
         groups:
@@ -27,6 +30,7 @@ git:
           name: data/processed/prebuild/bilara/sc_names.json
           sutta: data/processed/prebuild/bilara/sc_bilara_segments.json
       parallels:
+        module: parallels_task
         path: data/raw/git/sc-data/relationship/parallels.json
         replacements:
           - ['"mn75.1"', '"mn75#1"']
