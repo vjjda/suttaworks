@@ -20,3 +20,33 @@ prune = [
     "**/dpd/dpd-kindle"
 ]
 dirs-only = []
+
+[pcode]
+
+# Đường dẫn thư mục mặc định để lưu file context.
+# Hỗ trợ `~` (ví dụ: "~/Documents/code_contexts")
+output_dir = "./tmp"
+
+# Danh sách các đuôi file (extensions) cần bao gồm.
+# Bất kỳ giá trị nào ở đây sẽ GHI ĐÈ hoàn toàn danh sách mặc định.
+# (CLI: -e "py,md" / +e "ts" / ~e "log")
+extensions = ["bash", "cfg", "cfg.py", "ini", "json", "md", "py", "sh", "template", "toml", "txt", "xml", "yaml", "yml", "zsh"]
+
+# Danh sách các pattern (kiểu .gitignore) để bỏ qua.
+# Các giá trị này sẽ được THÊM vào danh sách mặc định.
+# (CLI: -I "*.log,build/")
+ignore = [".DS_Store", ".git", ".hg", ".svn", ".venv", "__pycache__", "venv"]
+
+include = []
+
+# Danh sách các đuôi file cần LÀM SẠCH (clean) khi dùng -a/--all-clean.
+# GHI ĐÈ hoàn toàn danh sách mặc định (thường là ["py"]).
+# Bị ghi đè/sửa đổi bởi cờ CLI -x/--clean-extensions.
+# Ví dụ: clean_extensions = ["py", "js"]
+clean_extensions = ["py", "sh", "zsh"]
+
+# Danh sách các đuôi file cần FORMAT khi dùng -f/--format.
+# GHI ĐÈ hoàn toàn danh sách mặc định (thường là ["py"]).
+# (Hiện chưa có cờ CLI để sửa đổi danh sách này)
+# Ví dụ: format_extensions = ["py"]
+format_extensions = ["py"]
