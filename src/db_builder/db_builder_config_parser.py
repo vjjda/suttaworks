@@ -1,4 +1,4 @@
-# Path: src/db_builder/config_loader.py
+# Path: src/db_builder/db_builder_config_parser.py
 
 import yaml
 import logging
