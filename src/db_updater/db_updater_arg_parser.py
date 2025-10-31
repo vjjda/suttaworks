@@ -43,18 +43,14 @@ class CliArgsHandler:
             action="store_true",
             help="Chỉ chạy các tác vụ hậu xử lý, không cập nhật dữ liệu.",
         )
-                tasks_arg = parser.add_argument(
-                    "-t",
-                    "--tasks",
-                    nargs="?",
-                    const="_LIST_TASKS_",
-                    default=None,
-                    type=str,
-                    help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.\n"
-                    "Nếu gọi không có giá trị, sẽ liệt kê các tác vụ có sẵn cho module đó.",
-                )
-                tasks_arg.completer = self._task_completer
-                return parser
+        tasks_arg = parser.add_argument(
+            "-t",
+            "--tasks",
+            type=str,
+            help="Chạy tác vụ hậu xử lý cụ thể. CHỈ hoạt động khi chọn một module.",
+        )
+        tasks_arg.completer = self._task_completer
+        return parser
     def get_available_tasks(self, module_name: str) -> list[str]:
         tasks = []
         module_config = self.config.get(module_name, {})
@@ -105,18 +101,12 @@ class CliArgsHandler:
             single_module = modules_to_run[0]
             available_tasks = self.get_available_tasks(single_module)
 
-            if args.tasks == "_LIST_TASKS_":
-                self.log.info(f"Các tác vụ có sẵn cho module '{single_module}':")
-                for task in available_tasks:
-                    print(f"- {task}")
+            tasks_to_run = [task.strip() for task in args.tasks.split(",")]
+            if any(task not in available_tasks for task in tasks_to_run):
+                self.log.error(
+                    f"Một hoặc nhiều tác vụ không hợp lệ cho module '{single_module}'."
+                )
                 return None
-            else:
-                tasks_to_run = [task.strip() for task in args.tasks.split(",")]
-                if any(task not in available_tasks for task in tasks_to_run):
-                    self.log.error(
-                        f"Một hoặc nhiều tác vụ không hợp lệ cho module '{single_module}'."
-                    )
-                    return None
 
         if args.update_only and args.post_tasks_only:
             self.log.error(
