@@ -10,7 +10,7 @@ PROJECT_ROOT=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)
 
 # --- Relative Paths (Calculated by zrap) ---
 VENV_PATH="$PROJECT_ROOT/.venv"
-SCRIPT_TO_RUN="$PROJECT_ROOT/src/db_updater/main.py"
+SCRIPT_TO_RUN="$PROJECT_ROOT/src/db_updater/__main__.py"
 # --- END PATHS ---
 
 # 2. Activate virtual environment
