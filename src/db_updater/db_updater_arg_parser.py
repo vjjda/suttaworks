@@ -28,6 +28,7 @@ class CliArgsHandler:
             "-m",
             "--module",
             default=None,
+            choices=self.available_modules + ["all"],
             help="Tên module cần cập nhật (e.g., 'git', 'git,suttaplex', 'all').",
         )
         parser.add_argument(
