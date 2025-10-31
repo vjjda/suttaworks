@@ -111,24 +111,33 @@ class GitHandler(BaseHandler):
         if not success:
             raise RuntimeError("Không thể chạy 'git status' để kiểm tra thay đổi.")
 
-        changed_submodule_names = []
+        paths_to_add = []
         if status_output:
             lines = status_output.strip().split("\n")
             for line in lines:
+                # We are only interested in modified submodules
                 if line.startswith(" M "):
                     path_str = line.strip().split(" ", 1)[1]
-                    changed_submodule_names.append(Path(path_str).name)
+                    # Ensure the change is within one of the managed submodules
+                    is_managed_submodule = any(
+                        Path(path_str).is_relative_to(self.destination_dir / name)
+                        for name in submodule_repos
+                    )
+                    if is_managed_submodule:
+                        paths_to_add.append(path_str)
 
-        if not changed_submodule_names:
+        if not paths_to_add:
             log.info("Không có submodule nào thực sự thay đổi. Không cần commit.")
         else:
+            # Use the names of the parent directories for the commit message
+            changed_submodule_names = sorted(list(set([Path(p).name for p in paths_to_add])))
             log.info(
                 f"Phát hiện thay đổi trong các submodule: {', '.join(changed_submodule_names)}"
             )
             log.info("Tự động commit các thay đổi...")
 
             commit_message = f"chore(data): Update data from submodules: {', '.join(changed_submodule_names)}"
-            add_command = ["git", "add", "."]
+            add_command = ["git", "add"] + paths_to_add
             commit_command = ["git", "commit", "-m", commit_message]
 
             add_success, _ = self._run_command(add_command, cwd=self.project_root)
