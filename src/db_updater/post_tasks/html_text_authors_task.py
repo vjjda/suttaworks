@@ -7,16 +7,12 @@ from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
 
+
 def process_html_text_authors_data(config: Dict, project_root: Path):
-    """
-    Quét thư mục chứa các file HTML, trích xuất tên tác giả từ thẻ meta,
-    và tạo một JSON có cấu trúc lồng nhau theo thư mục, bỏ qua các
-    thư mục được chỉ định trong config.
-    """
     try:
-        base_path = project_root / config['path']
-        output_file = project_root / config['output']
-        ignore_list = config.get('ignore', [])
+        base_path = project_root / config["path"]
+        output_file = project_root / config["output"]
+        ignore_list = config.get("ignore", [])
     except KeyError as e:
         log.error(f"Thiếu key bắt buộc trong cấu hình 'html_text': {e}")
         return
@@ -33,11 +29,12 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
     total_files_scanned = 0
     ignored_files_count = 0
 
-    for html_file in base_path.glob('**/*.html'):
+    for html_file in base_path.glob("**/*.html"):
         total_files_scanned += 1
-        
+
         is_ignored = any(
-            html_file.resolve().is_relative_to(ignored_dir) for ignored_dir in ignore_paths
+            html_file.resolve().is_relative_to(ignored_dir)
+            for ignored_dir in ignore_paths
         )
 
         if is_ignored:
@@ -46,45 +43,46 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
             continue
 
         try:
-            with open(html_file, 'r', encoding='utf-8') as f:
+            with open(html_file, "r", encoding="utf-8") as f:
                 content = f.read()
-            
-            soup = BeautifulSoup(content, 'html.parser')
-            meta_tag = soup.find('meta', attrs={'name': 'author'})
-            
-            if meta_tag and meta_tag.get('content'):
-                author = meta_tag.get('content').strip()
+
+            soup = BeautifulSoup(content, "html.parser")
+            meta_tag = soup.find("meta", attrs={"name": "author"})
+
+            if meta_tag and meta_tag.get("content"):
+                author = meta_tag.get("content").strip()
                 relative_path = html_file.relative_to(base_path)
                 path_parts = relative_path.parts
-                
+
                 current_level = author_map
                 for part in path_parts[:-1]:
                     current_level = current_level.setdefault(part, {})
-                
+
                 current_level[path_parts[-1]] = author
             else:
-                log.warning(f"Không tìm thấy thẻ <meta name='author'> trong file: {html_file.name}")
+                log.warning(
+                    f"Không tìm thấy thẻ <meta name='author'> trong file: {html_file.name}"
+                )
 
         except Exception as e:
             log.error(f"Lỗi khi xử lý file {html_file.name}: {e}")
 
-    log.info(f"Đã quét {total_files_scanned} file HTML, trong đó bỏ qua {ignored_files_count} file.")
+    log.info(
+        f"Đã quét {total_files_scanned} file HTML, trong đó bỏ qua {ignored_files_count} file."
+    )
 
     if author_map:
         processed_count = total_files_scanned - ignored_files_count
-        log.info(f"Trích xuất được thông tin từ {processed_count} file. Đang chuẩn bị ghi file...")
+        log.info(
+            f"Trích xuất được thông tin từ {processed_count} file. Đang chuẩn bị ghi file..."
+        )
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        # --- THAY ĐỔI: Bọc kết quả vào cấu trúc mới ---
-        final_output = {
-            "suttacentral-data": {
-                "html_text": author_map
-            }
-        }
-        
+
+        final_output = {"suttacentral-data": {"html_text": author_map}}
+
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
-                # Ghi cấu trúc final_output thay vì author_map
+            with open(output_file, "w", encoding="utf-8") as f:
+
                 json.dump(final_output, f, ensure_ascii=False, indent=2)
             log.info(f"✅ Đã tạo file tổng hợp tại: {output_file}")
         except IOError as e:
