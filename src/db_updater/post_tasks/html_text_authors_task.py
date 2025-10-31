@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Dict
 from bs4 import BeautifulSoup
 
+from src.config import constants
+
 log = logging.getLogger(__name__)
+
+
+def run(task_config: Dict):
+    """Adapter function to be called by the BaseHandler."""
+    process_html_text_authors_data(task_config, constants.PROJECT_ROOT)
 
 
 def process_html_text_authors_data(config: Dict, project_root: Path):

@@ -10,67 +10,69 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import gdown
 
+from src.db_updater.handlers.base_handler import BaseHandler
+
 log = logging.getLogger(__name__)
 
 
-def _get_folder_id_from_url(url: str) -> str | None:
-    match = re.search(r"/folders/([a-zA-Z0-9_-]+)", url)
-    return match.group(1) if match else None
+class GDriveHandler(BaseHandler):
+    """
+    Handler để xử lý việc tải và cập nhật dữ liệu từ Google Drive.
+    """
 
-
-def _get_local_version(version_file: Path) -> int:
-    if not version_file.exists():
-        return 0
-    try:
-        with open(version_file, "r") as f:
-            data = json.load(f)
-            return int(data.get("version", 0))
-    except (json.JSONDecodeError, ValueError):
-        log.error(
-            f"Lỗi đọc file version.json tại {version_file}. Coi như version là 0."
-        )
-        return 0
-
-
-def _write_local_version(version_file: Path, version: int, filename: str):
-    from datetime import datetime, timezone
-
-    version_data = {
-        "version": str(version),
-        "download_date": datetime.now(timezone.utc).isoformat(),
-        "source_filename": filename,
-    }
-    with open(version_file, "w") as f:
-        json.dump(version_data, f, indent=2)
-    log.info(f"Đã cập nhật file version.json với phiên bản {version}.")
-
-
-def process_gdrive_data(
-    handler_config: dict,
-    destination_dir: Path,
-    run_update: bool = True,
-    run_post_process: bool = True,
-    tasks_to_run: list[str] | None = None,
-):
-
-    if run_update:
-        log.info("=== GIAI ĐOẠN: CẬP NHẬT DỮ LIỆU TỪ GOOGLE DRIVE ===")
+    def __init__(self, handler_config: dict, destination_dir: Path):
+        super().__init__(handler_config, destination_dir)
         load_dotenv()
-        API_KEY = os.getenv("GOOGLE_API_KEY")
-        if not API_KEY:
+        self.api_key = os.getenv("GOOGLE_API_KEY")
+
+    def _get_folder_id_from_url(self, url: str) -> str | None:
+        match = re.search(r"/folders/([a-zA-Z0-9_-]+)", url)
+        return match.group(1) if match else None
+
+    def _get_local_version(self, version_file: Path) -> int:
+        if not version_file.exists():
+            return 0
+        try:
+            with open(version_file, "r") as f:
+                data = json.load(f)
+                return int(data.get("version", 0))
+        except (json.JSONDecodeError, ValueError):
+            log.error(
+                f"Lỗi đọc file version.json tại {version_file}. Coi như version là 0."
+            )
+            return 0
+
+    def _write_local_version(self, version_file: Path, version: int, filename: str):
+        from datetime import datetime, timezone
+
+        version_data = {
+            "version": str(version),
+            "download_date": datetime.now(timezone.utc).isoformat(),
+            "source_filename": filename,
+        }
+        with open(version_file, "w") as f:
+            json.dump(version_data, f, indent=2)
+        log.info(f"Đã cập nhật file version.json với phiên bản {version}.")
+
+    def execute(self):
+        """
+        Thực thi logic chính: tìm file mới nhất trong thư mục Google Drive,
+        so sánh phiên bản và tải về nếu cần.
+        """
+        if not self.api_key:
             log.error(
                 "Không tìm thấy GOOGLE_API_KEY trong file .env. Vui lòng kiểm tra lại."
             )
             return
 
-        folder_url = handler_config.get("zip")
-        folder_id = _get_folder_id_from_url(folder_url)
+        folder_url = self.handler_config.get("zip")
+        folder_id = self._get_folder_id_from_url(folder_url)
         if not folder_id:
             log.error(f"URL thư mục Google Drive không hợp lệ: {folder_url}")
             return
 
         try:
-            service = build("drive", "v3", developerKey=API_KEY)
+            service = build("drive", "v3", developerKey=self.api_key)
             query = f"'{folder_id}' in parents and trashed = false"
             results = service.files().list(q=query, fields="files(id, name)").execute()
             files = results.get("files", [])
@@ -83,7 +85,7 @@ def process_gdrive_data(
             log.error(f"Lỗi khi gọi Google Drive API: {error}")
             return
 
-        version_regex = handler_config.get("version-date")
+        version_regex = self.handler_config.get("version-date")
         latest_version = 0
         latest_file = None
         for file in files:
@@ -102,42 +104,31 @@ def process_gdrive_data(
             f"Phiên bản mới nhất online: {latest_version} (file: {latest_file['name']})"
         )
 
-        version_file = destination_dir / "version.json"
-        local_version = _get_local_version(version_file)
+        version_file = self.destination_dir / "version.json"
+        local_version = self._get_local_version(version_file)
         log.info(f"Phiên bản hiện tại local: {local_version}")
 
         if latest_version <= local_version:
             log.info("Dữ liệu đã là phiên bản mới nhất. Không cần cập nhật.")
+            return
+
+        self.destination_dir.mkdir(parents=True, exist_ok=True)
+        zip_path = self.destination_dir / latest_file["name"]
+        log.info(f"Đang tải file mới: {latest_file['name']}...")
+        gdown.download(id=latest_file["id"], output=str(zip_path), quiet=False)
+
+        extract_dir_name = self.handler_config.get("extract")
+        extract_path = self.destination_dir / extract_dir_name
+        log.info(f"Đang giải nén vào: {extract_path}...")
+        if is_zipfile(zip_path):
+            with ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(extract_path)
         else:
-
-            destination_dir.mkdir(parents=True, exist_ok=True)
-            zip_path = destination_dir / latest_file["name"]
-            log.info(f"Đang tải file mới: {latest_file['name']}...")
-            gdown.download(id=latest_file["id"], output=str(zip_path), quiet=False)
-
-            extract_dir_name = handler_config.get("extract")
-            extract_path = destination_dir / extract_dir_name
-            log.info(f"Đang giải nén vào: {extract_path}...")
-            if is_zipfile(zip_path):
-                with ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(extract_path)
-            else:
-                log.error("File tải về không phải là file zip hợp lệ.")
-                return
-
-            _write_local_version(version_file, latest_version, latest_file["name"])
+            log.error("File tải về không phải là file zip hợp lệ.")
+            # Clean up downloaded file on error
             zip_path.unlink()
-            log.info(f"Đã xóa file tạm: {zip_path.name}")
-    else:
-        log.info("Bỏ qua giai đoạn cập nhật dữ liệu Google Drive theo yêu cầu.")
+            return
 
-    if run_post_process:
-        log.info("=== GIAI ĐOẠN: HẬU XỬ LÝ (POST-PROCESSING) ===")
-        if "post_tasks" in handler_config:
-            for task_name in handler_config["post_tasks"]:
-                if tasks_to_run is None or task_name in tasks_to_run:
-                    log.warning(f"--> Tác vụ '{task_name}' là placeholder, bỏ qua.")
-                else:
-                    log.info(f"--> Bỏ qua tác vụ '{task_name}' theo yêu cầu.")
-    else:
-        log.info("Bỏ qua giai đoạn hậu xử lý theo yêu cầu.")
+        self._write_local_version(version_file, latest_version, latest_file["name"])
+        zip_path.unlink()
+        log.info(f"Đã xóa file tạm: {zip_path.name}")

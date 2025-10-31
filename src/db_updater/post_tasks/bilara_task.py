@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Dict, Any, List
 from natsort import natsorted
 
+from src.config import constants
+
 log = logging.getLogger(__name__)
+
+
+def run(task_config: Dict):
+    """Adapter function to be called by the BaseHandler."""
+    process_bilara_data(task_config, constants.PROJECT_ROOT)
 
 
 def _write_json_output(output_path: Path, data: Dict[str, Any], data_name: str):

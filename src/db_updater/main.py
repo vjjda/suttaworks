@@ -8,20 +8,23 @@ from src.config.logging_config import setup_logging
 from src.db_updater.config_parser import load_config
 from src.db_updater.handlers import (
     api_handler,
-    gdrive_handler,
     git_handler,
     git_release_handler,
 )
+from src.db_updater.handlers.git_release_handler import GitReleaseHandler
+from src.db_updater.handlers.git_handler import GitHandler
+from src.db_updater.handlers.api_handler import ApiHandler
+from src.db_updater.handlers.gdrive_handler import GDriveHandler
 from src.config import constants
 
 setup_logging("db_updater.log")
 log = logging.getLogger(__name__)
 
 HANDLER_DISPATCHER = {
-    "git-submodule": git_handler.process_git_submodules,
-    "api": api_handler.process_api_data,
-    "google-drive": gdrive_handler.process_gdrive_data,
-    "git-release": git_release_handler.process_git_release_data,
+    "git-submodule": GitHandler,
+    "api": ApiHandler,
+    "google-drive": GDriveHandler,
+    "git-release": GitReleaseHandler,
 }
 
 
@@ -161,17 +164,34 @@ def main():
         module_type = list(module_config.keys())[0]
         handler_config = module_config[module_type]
 
-        handler_func = HANDLER_DISPATCHER.get(module_type)
-        if handler_func:
-            handler_func(
-                handler_config,
-                destination_dir,
-                run_update=run_update,
-                run_post_process=run_post_process,
-                tasks_to_run=tasks_to_run,
-            )
-        else:
+        handler_class_or_func = HANDLER_DISPATCHER.get(module_type)
+
+        if not handler_class_or_func:
             log.warning(f"Không tìm thấy handler cho loại module '{module_type}'.")
+            continue
+
+        try:
+            # Kiểm tra xem đó là class hay function để tương thích ngược
+            if isinstance(handler_class_or_func, type):
+                # Là class (cấu trúc mới)
+                handler_instance = handler_class_or_func(handler_config, destination_dir)
+                handler_instance.process(
+                    run_update=run_update,
+                    run_post_process=run_post_process,
+                    tasks_to_run=tasks_to_run,
+                )
+            else:
+                # Là function (cấu trúc cũ)
+                handler_class_or_func(
+                    handler_config,
+                    destination_dir,
+                    run_update=run_update,
+                    run_post_process=run_post_process,
+                    tasks_to_run=tasks_to_run,
+                )
+        except Exception:
+            log.critical(f"Lỗi nghiêm trọng khi xử lý module '{module_name}'.", exc_info=True)
+
 
     log.info("Hoàn tất!")
 
