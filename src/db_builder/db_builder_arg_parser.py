@@ -1,6 +1,7 @@
 # Path: src/db_builder/db_builder_arg_parser.py
 import argparse
 
+
 class BuilderArgsParser:
     def __init__(self):
         self.parser = self._setup_parser()

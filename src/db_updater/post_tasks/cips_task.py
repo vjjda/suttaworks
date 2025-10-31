@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 
 
 def run(task_config: Dict):
-    """Adapter function to be called by the BaseHandler."""
     process_cips_csv_to_json(task_config, constants.PROJECT_ROOT)
 
 

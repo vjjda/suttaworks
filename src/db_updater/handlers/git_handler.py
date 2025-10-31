@@ -11,9 +11,6 @@ log = logging.getLogger(__name__)
 
 
 class GitHandler(BaseHandler):
-    """
-    Handler để xử lý việc cập nhật các git submodule.
-    """
 
     def __init__(self, handler_config: dict, destination_dir: Path):
         super().__init__(handler_config, destination_dir)
@@ -58,10 +55,6 @@ class GitHandler(BaseHandler):
             return False, str(e)
 
     def execute(self):
-        """
-        Thực thi logic chính: cập nhật các git submodule, và nếu có thay đổi,
-        tự động commit chúng.
-        """
         log.info("Bắt đầu cập nhật dữ liệu Git Submodule.")
         self.destination_dir.mkdir(parents=True, exist_ok=True)
 
@@ -70,7 +63,9 @@ class GitHandler(BaseHandler):
         if gitmodules_path.exists():
             config.read(gitmodules_path)
 
-        submodule_repos = {k: v for k, v in self.handler_config.items() if k != "post_tasks"}
+        submodule_repos = {
+            k: v for k, v in self.handler_config.items() if k != "post_tasks"
+        }
         has_new_submodules = False
 
         for name, url in submodule_repos.items():
@@ -92,7 +87,9 @@ class GitHandler(BaseHandler):
                 ]
                 success, _ = self._run_command(command, cwd=self.project_root)
                 if not success:
-                    raise RuntimeError(f"Không thể thêm submodule '{name}'. Dừng xử lý.")
+                    raise RuntimeError(
+                        f"Không thể thêm submodule '{name}'. Dừng xử lý."
+                    )
 
         if not has_new_submodules:
             log.info("Không có submodule mới nào để thêm.")
@@ -107,7 +104,9 @@ class GitHandler(BaseHandler):
         log.info("Kiểm tra trạng thái sau khi cập nhật để xác định các thay đổi...")
         status_command = ["git", "status", "--porcelain"]
 
-        success, status_output = self._run_command(status_command, cwd=self.project_root)
+        success, status_output = self._run_command(
+            status_command, cwd=self.project_root
+        )
         if not success:
             raise RuntimeError("Không thể chạy 'git status' để kiểm tra thay đổi.")
 
@@ -115,10 +114,10 @@ class GitHandler(BaseHandler):
         if status_output:
             lines = status_output.strip().split("\n")
             for line in lines:
-                # We are only interested in modified submodules
+
                 if line.startswith(" M "):
                     path_str = line.strip().split(" ", 1)[1]
-                    # Ensure the change is within one of the managed submodules
+
                     is_managed_submodule = any(
                         Path(path_str).is_relative_to(self.destination_dir / name)
                         for name in submodule_repos
@@ -129,8 +128,10 @@ class GitHandler(BaseHandler):
         if not paths_to_add:
             log.info("Không có submodule nào thực sự thay đổi. Không cần commit.")
         else:
-            # Use the names of the parent directories for the commit message
-            changed_submodule_names = sorted(list(set([Path(p).name for p in paths_to_add])))
+
+            changed_submodule_names = sorted(
+                list(set([Path(p).name for p in paths_to_add]))
+            )
             log.info(
                 f"Phát hiện thay đổi trong các submodule: {', '.join(changed_submodule_names)}"
             )

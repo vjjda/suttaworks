@@ -10,22 +10,9 @@ log = logging.getLogger(__name__)
 
 
 def run(task_config: Dict):
-    """
-    Hàm chạy chính cho tác vụ, được gọi bởi BaseHandler.
 
-    Args:
-        task_config: Dictionary chứa cấu hình cho tác vụ này.
-    """
-    # Lấy các đường dẫn cần thiết từ constants và config
     project_root = constants.PROJECT_ROOT
-    # Giả định rằng input cho tác vụ này là thư mục output của handler đã chạy trước đó.
-    # Cần một cách để truyền đường dẫn này vào.
-    # Tạm thời, chúng ta có thể giả định nó dựa trên cấu trúc module.
-    # Ví dụ: nếu handler là 'suttaplex', input_dir sẽ là 'data/raw/suttaplex'
-    # Điều này cần được làm rõ hơn trong kiến trúc tổng thể.
-    # For now, let's assume the input directory is passed in the config,
-    # or we construct it based on conventions.
-    # Let's add a key 'input_module' to the task_config in updater_config.yaml
+
     input_module_name = task_config.get("input_module")
     if not input_module_name:
         log.error("Tác vụ 'suttaplex-json' yêu cầu 'input_module' trong cấu hình.")

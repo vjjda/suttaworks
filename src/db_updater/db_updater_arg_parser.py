@@ -51,6 +51,7 @@ class CliArgsHandler:
         )
         tasks_arg.completer = self._task_completer
         return parser
+
     def get_available_tasks(self, module_name: str) -> list[str]:
         tasks = []
         module_config = self.config.get(module_name, {})
@@ -66,7 +67,6 @@ class CliArgsHandler:
         return list(dict.fromkeys(tasks))
 
     def _task_completer(self, prefix, parsed_args, **kwargs):
-        """Custom completer for the --tasks argument."""
         if parsed_args.module and parsed_args.module != "all":
             module_name = parsed_args.module.split(",")[0]
             return self.get_available_tasks(module_name)

@@ -14,7 +14,6 @@ log = logging.getLogger(__name__)
 
 
 def run(task_config: dict):
-    """Adapter function to be called by the BaseHandler."""
     process_parallels_data(task_config, constants.PROJECT_ROOT)
 
 

@@ -11,6 +11,6 @@ def load_config(config_path: Path) -> dict | None:
         with open(config_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
     except FileNotFoundError:
-        # Log error if file not found, but don't log success.
+
         log.error(f"Không tìm thấy file cấu hình tại: {config_path}")
         return None

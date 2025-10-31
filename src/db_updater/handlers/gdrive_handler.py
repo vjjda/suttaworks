@@ -16,9 +16,6 @@ log = logging.getLogger(__name__)
 
 
 class GDriveHandler(BaseHandler):
-    """
-    Handler để xử lý việc tải và cập nhật dữ liệu từ Google Drive.
-    """
 
     def __init__(self, handler_config: dict, destination_dir: Path):
         super().__init__(handler_config, destination_dir)
@@ -55,10 +52,6 @@ class GDriveHandler(BaseHandler):
         log.info(f"Đã cập nhật file version.json với phiên bản {version}.")
 
     def execute(self):
-        """
-        Thực thi logic chính: tìm file mới nhất trong thư mục Google Drive,
-        so sánh phiên bản và tải về nếu cần.
-        """
         if not self.api_key:
             log.error(
                 "Không tìm thấy GOOGLE_API_KEY trong file .env. Vui lòng kiểm tra lại."
@@ -125,7 +118,7 @@ class GDriveHandler(BaseHandler):
                 zip_ref.extractall(extract_path)
         else:
             log.error("File tải về không phải là file zip hợp lệ.")
-            # Clean up downloaded file on error
+
             zip_path.unlink()
             return
 

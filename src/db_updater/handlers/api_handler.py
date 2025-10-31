@@ -10,9 +10,6 @@ log = logging.getLogger(__name__)
 
 
 class ApiHandler(BaseHandler):
-    """
-    Handler để xử lý việc tải dữ liệu từ các điểm cuối (endpoints) API.
-    """
 
     def _fetch_and_save(self, url: str, filepath: Path):
         try:
@@ -28,10 +25,6 @@ class ApiHandler(BaseHandler):
             return False
 
     def execute(self):
-        """
-        Thực thi logic chính: lặp qua các nhóm và UID được định nghĩa trong
-        cấu hình, sau đó tải dữ liệu từ API tương ứng.
-        """
         log.info("Bắt đầu cập nhật dữ liệu từ API.")
         base_url = self.handler_config.get("base_url")
         groups = self.handler_config.get("groups", {})
@@ -54,5 +47,5 @@ class ApiHandler(BaseHandler):
         if all_successful:
             log.info("Tải dữ liệu API hoàn tất.")
         else:
-            # Ném ra một ngoại lệ để báo hiệu cho quy trình chính rằng có lỗi
+
             raise RuntimeError("Một hoặc nhiều file API không thể tải về.")

@@ -21,23 +21,16 @@ HANDLER_DISPATCHER = {
 
 
 def main():
-    # Load config first, as it's needed for parser setup
+
     config_path = constants.CONFIG_PATH / "updater_config.yaml"
     config = load_config(config_path)
 
-    # Setup parser
-    # A dummy logger is used here, as full logging is set up only after we know
-    # we are not just doing a help or autocomplete call.
     arg_handler = CliArgsHandler(config, log=logging.getLogger(__name__))
 
-    # Activate argcomplete. This will handle completion requests and exit.
     argcomplete.autocomplete(arg_handler.parser)
 
-    # Now, parse the arguments. This will also handle -h/--help and exit.
     args = arg_handler.parse_args()
 
-    # If we've reached this point, we are running the main logic.
-    # Now we can set up proper logging.
     setup_logging("db_updater.log")
     log = logging.getLogger(__name__)
     log.info(f"Đang đọc cấu hình từ: {config_path}")
@@ -46,7 +39,6 @@ def main():
         log.error("Không thể tải cấu hình. Dừng chương trình.")
         return
 
-    # Validate the parsed arguments
     processed_args = arg_handler.validate_args(args)
 
     if not processed_args:
@@ -75,7 +67,9 @@ def main():
                 tasks_to_run=processed_args.tasks_to_run,
             )
         except Exception:
-            log.critical(f"Lỗi nghiêm trọng khi xử lý module '{module_name}'.", exc_info=True)
+            log.critical(
+                f"Lỗi nghiêm trọng khi xử lý module '{module_name}'.", exc_info=True
+            )
 
     log.info("Hoàn tất!")
 

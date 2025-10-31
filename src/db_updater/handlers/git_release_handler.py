@@ -18,9 +18,6 @@ log = logging.getLogger(__name__)
 
 
 class GitReleaseHandler(BaseHandler):
-    """
-    Handler để xử lý việc tải và cập nhật dữ liệu từ GitHub Releases.
-    """
 
     def __init__(self, handler_config: dict, destination_dir: Path):
         super().__init__(handler_config, destination_dir)
@@ -41,9 +38,7 @@ class GitReleaseHandler(BaseHandler):
             return match.groups()
         return None
 
-    def _get_release_info(
-        self, owner: str, repo: str, version: str
-    ) -> dict | None:
+    def _get_release_info(self, owner: str, repo: str, version: str) -> dict | None:
         if version == "latest":
             url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
         else:
@@ -96,7 +91,11 @@ class GitReleaseHandler(BaseHandler):
             raise
 
     def _decompress_archive(
-        self, archive_path: Path, extract_dir: Path, force_extract: bool, auto_extract: bool
+        self,
+        archive_path: Path,
+        extract_dir: Path,
+        force_extract: bool,
+        auto_extract: bool,
     ):
         file_name = archive_path.name
         should_delete_archive = True
@@ -136,7 +135,9 @@ class GitReleaseHandler(BaseHandler):
 
     def execute(self):
         log.info("Bắt đầu cập nhật dữ liệu từ GitHub Releases.")
-        repo_configs = {k: v for k, v in self.handler_config.items() if k != "post_tasks"}
+        repo_configs = {
+            k: v for k, v in self.handler_config.items() if k != "post_tasks"
+        }
 
         for item_name, item_config in repo_configs.items():
             log.info(f"--- Bắt đầu xử lý module release: '{item_name}' ---")
@@ -149,9 +150,7 @@ class GitReleaseHandler(BaseHandler):
                 continue
             owner, repo = repo_info
 
-            release_info = self._get_release_info(
-                owner, repo, item_config["version"]
-            )
+            release_info = self._get_release_info(owner, repo, item_config["version"])
             if not release_info:
                 continue
 

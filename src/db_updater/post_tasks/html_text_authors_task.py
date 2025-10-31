@@ -11,7 +11,6 @@ log = logging.getLogger(__name__)
 
 
 def run(task_config: Dict):
-    """Adapter function to be called by the BaseHandler."""
     process_html_text_authors_data(task_config, constants.PROJECT_ROOT)
 
 
