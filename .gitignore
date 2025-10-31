@@ -21,6 +21,8 @@ __pycache__/
 
 logs/
 
+tmp/
+
 # File cấu hình local (nếu có)
 config.local.ini
 
