@@ -1,34 +1,25 @@
+# Bỏ qua TẤT CẢ CÁC FILE VÀ THƯ MỤC CON bên trong data/raw/
+/data/raw/*
+# NHƯNG đừng bỏ qua thư mục git (để nó có thể quét bên trong)
+!/data/raw/git/
+# VÀ đừng bỏ qua các submodules
+!/data/raw/git/sc-data/
+!/data/raw/git/cips/
+
+logs/
+tmp/
+/data/processed/*
 # Môi trường ảo Python
 venv/
 *.venv
 env/
 .env
-
-# Files của macOS
-.DS_Store
-
 # Thư mục cache của Python
 __pycache__/
 *.py[cod]
+# Files của macOS
+.DS_Store
 
-# Bỏ qua TẤT CẢ CÁC FILE VÀ THƯ MỤC CON bên trong data/raw/
-/data/raw/*
-
-# Bỏ qua TẤT CẢ CÁC FILE VÀ THƯ MỤC CON bên trong data/raw/
-/data/raw/*
-
-# NHƯNG đừng bỏ qua thư mục git (để nó có thể quét bên trong)
-!/data/raw/git/
-
-# VÀ đừng bỏ qua các submodules
-!/data/raw/git/sc-data/
-!/data/raw/git/cips/
-
-/data/processed/*
-
-logs/
-
-tmp/
 
 # File cấu hình local (nếu có)
 config.local.ini
