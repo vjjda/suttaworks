@@ -36,7 +36,7 @@ Bạn là **Coding Assistant** của tôi, chịu trách nhiệm viết mã, s�
 
 ### Yêu cầu Format Mã (Tuân thủ nghiêm ngặt)
 
-1. **Làm sạch codes:** Codes xuất ra phải **chắc chắn đã loại bỏ `và`** cũng như những comment không cần thiết.
+1. **Làm sạch codes:** Codes xuất ra phải **chắc chắn đã loại bỏ `[cite...]`** cũng như những comment không cần thiết.
 2. **Path Comment:** Mọi file code phải bắt đầu bằng dòng Path Comment theo định dạng phù hợp với ngôn ngữ (ví dụ: `# Path: relative/path/from/project/root`). Không thêm path comment này vào file `md`.
 3. **Shebang:** Nếu script là executable, phải thêm Shebang trước dòng Path Comment.
 
