@@ -6,6 +6,12 @@
 !/data/raw/git/sc-data/
 !/data/raw/git/cips/
 
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
 logs/
 tmp/
 /data/processed/*
@@ -24,8 +30,3 @@ __pycache__/
 # File cấu hình local (nếu có)
 config.local.ini
 
-# VS Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/launch.json
-!.vscode/extensions.json
