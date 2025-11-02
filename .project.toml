@@ -59,7 +59,7 @@ extensions = ["", "bash", "cfg", "cfg.py", "gitignore", "ini", "json", "md", "py
 # GHI ĐÈ hoàn toàn danh sách mặc định (thường là ["py"]).
 # (Hiện chưa có cờ CLI để sửa đổi danh sách này)
 # Ví dụ: format_extensions = ["py"]
-format_extensions = ["py", "pyi"]
+format_extensions = ["py"]
 
 # Danh sách các pattern (kiểu .gitignore) để bỏ qua.
 # Các giá trị này sẽ được THÊM vào danh sách mặc định.
@@ -116,3 +116,17 @@ format_extensions = ["py"]
 # Các giá trị này sẽ được THÊM vào danh sách mặc định.
 # Ví dụ: ignore = ["**/tests/*"] # Placeholder vẫn là list
 ignore = [".DS_Store", ".git", ".hg", ".svn", ".venv", "/.gitignore", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+[cpath]
+
+# extensions (List[str]): Danh sách các đuôi file cần quét.
+# Ghi đè hoàn toàn danh sách mặc định của script.
+# Ví dụ: extensions = ["py", "js", "ts", "md"]
+# Mặc định: {toml_extensions}
+extensions = ["css", "js", "py", "pyi", "scss", "sh", "template.toml", "ts", "zsh"]
+
+# ignore (List[str]): Danh sách các pattern (giống .gitignore) để bỏ qua.
+# Các pattern này sẽ được NỐI VÀO danh sách mặc định của script.
+# Ví dụ: ignore = ["*.log", "temp/", "build*/"]
+# Mặc định (được thêm vào): {toml_ignore}
+ignore = [".git", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
