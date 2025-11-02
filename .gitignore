@@ -5,7 +5,7 @@ env/
 .env
 
 # Files của macOS
-**/.DS_Store
+.DS_Store
 
 # Thư mục cache của Python
 __pycache__/
@@ -15,7 +15,8 @@ __pycache__/
 /data/raw/*
 
 # NHƯNG đừng bỏ qua thư mục git-submodule
-!/data/raw/git
+!/data/raw/git/sc-data/
+!/data/raw/git/cips/
 
 /data/processed/*
 

@@ -40,7 +40,7 @@ show-submodules = false
 # use-gitignore (bool): Có tôn trọng file .gitignore hay không.
 # Cờ --no-gitignore trên CLI sẽ ghi đè giá trị này thành false.
 # Mặc định: true (luôn tôn trọng nếu là kho Git)
-use-gitignore = false
+use-gitignore = true
 
 [pcode]
 

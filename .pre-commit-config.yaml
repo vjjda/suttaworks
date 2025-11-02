@@ -2,27 +2,29 @@
 repos:
   - repo: local
     hooks:
-      # 1️⃣ Hook đầu tiên: Chạy ndoc
+      # 1️⃣ Hook ndoc (ĐÃ SỬA)
       - id: ndoc
         name: "NDoc Code Cleaner"
-        entry: ndoc -abf
+        # Chạy ndoc VÀ git add lại các file đã xử lý ($@)
+        entry: zsh -c 'ndoc -abf "$@" && git add "$@"' --
         language: system
         types: [python]
         stages: [pre-commit]
 
-      # 2️⃣ Hook thứ hai: Chạy cpath
+      # 2️⃣ Hook cpath (ĐÃ SỬA)
       - id: cpath
         name: "CPath Path Comment Checker"
-        entry: cpath
+        # Chạy cpath ở chế độ Force (-f) VÀ git add lại file ($@)
+        entry: zsh -c 'cpath -f "$@" && git add "$@"' --
         language: system
         types: [python, shell] 
         stages: [pre-commit]
       
-      # 3️⃣ Hook thứ ba: Chạy stubgen (ĐÃ SỬA)
+      # 3️⃣ Hook sgen (Giữ nguyên)
       - id: sgen
         name: "Stubs Generator"
         entry: sgen
         language: system
         stages: [pre-commit]
-        always_run: true       # <<< THAY ĐỔI: Luôn chạy
-        pass_filenames: false  # <<< THAY ĐỔI: Không truyền tên file
+        always_run: true
+        pass_filenames: false
