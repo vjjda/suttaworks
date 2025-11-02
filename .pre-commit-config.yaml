@@ -19,12 +19,3 @@ repos:
         language: system
         types: [python, shell] 
         stages: [pre-commit]
-      
-      # 3️⃣ Hook sgen (Giữ nguyên)
-      - id: sgen
-        name: "Stubs Generator"
-        entry: sgen -gf
-        language: system
-        stages: [pre-commit]
-        always_run: true
-        pass_filenames: false
