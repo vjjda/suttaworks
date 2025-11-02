@@ -1,0 +1,28 @@
+# Path: .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      # 1️⃣ Hook đầu tiên: Chạy ndoc
+      - id: ndoc
+        name: "NDoc Code Cleaner"
+        entry: ndoc -abf
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      # 2️⃣ Hook thứ hai: Chạy cpath
+      - id: cpath
+        name: "CPath Path Comment Checker"
+        entry: cpath
+        language: system
+        types: [python, shell] 
+        stages: [pre-commit]
+      
+      # 3️⃣ Hook thứ ba: Chạy stubgen (ĐÃ SỬA)
+      - id: sgen
+        name: "Stubs Generator"
+        entry: sgen
+        language: system
+        stages: [pre-commit]
+        always_run: true       # <<< THAY ĐỔI: Luôn chạy
+        pass_filenames: false  # <<< THAY ĐỔI: Không truyền tên file
