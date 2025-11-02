@@ -1,4 +1,5 @@
 # Path: src/db_updater/post_tasks/cips/__init__.pyi
+"""Statically declared API for cips"""
 
 from typing import Any, List, Optional, Set, Dict, Union
 from pathlib import Path
@@ -10,7 +11,7 @@ sort_sutta_index: Any
 sort_topic_index: Any
 write_json_file: Any
 
-
+# Static declaration of exported symbols (for Pylance)
 __all__: List[str] = [
     "ParsedRow",
     "parse_row",

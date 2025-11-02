@@ -23,7 +23,7 @@ repos:
       # 3️⃣ Hook sgen (Giữ nguyên)
       - id: sgen
         name: "Stubs Generator"
-        entry: sgen
+        entry: sgen -gf
         language: system
         stages: [pre-commit]
         always_run: true

@@ -104,13 +104,13 @@ include = []
 # GHI ĐÈ hoàn toàn danh sách mặc định CỦA SCRIPT.
 # Ví dụ: extensions = ["py", "pycst"]
 # Mặc định (từ config set): {toml_extensions} # Placeholder vẫn là list
-extensions = ["py", "pyi"]
+extensions = ["py"]
 
 # (Tùy chọn) Danh sách các đuôi file cần FORMAT khi dùng -f/--format.
 # GHI ĐÈ hoàn toàn danh sách mặc định (thường là ["py"]).
 # (Hiện chưa có cờ CLI để sửa đổi danh sách này)
 # Ví dụ: format_extensions = ["py"]
-format_extensions = ["py", "pyi"]
+format_extensions = ["py"]
 
 # ignore (List[str]): Danh sách các pattern (kiểu .gitignore) để bỏ qua.
 # Các giá trị này sẽ được THÊM vào danh sách mặc định.

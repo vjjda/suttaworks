@@ -1,4 +1,5 @@
 # Path: src/db_updater/post_tasks/parallels/__init__.pyi
+"""Statically declared API for parallels"""
 
 from typing import Any, List, Optional, Set, Dict, Union
 from pathlib import Path
@@ -11,7 +12,7 @@ invert_to_segment_structure: Any
 parse_sutta_id: Any
 sort_data_naturally: Any
 
-
+# Static declaration of exported symbols (for Pylance)
 __all__: List[str] = [
     "build_initial_map",
     "create_book_structure",
