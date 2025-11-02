@@ -48,7 +48,7 @@ use-gitignore = true
 # GHI ĐÈ hoàn toàn danh sách mặc định (thường là ["py"]).
 # Bị ghi đè/sửa đổi bởi cờ CLI -x/--clean-extensions.
 # Ví dụ: clean_extensions = ["py", "js"]
-clean_extensions = ["py", "pyi", "sh", "zsh"]
+clean_extensions = ["py", "sh", "zsh"]
 
 # Danh sách các đuôi file (extensions) cần bao gồm.
 # Bất kỳ giá trị nào ở đây sẽ GHI ĐÈ hoàn toàn danh sách mặc định.
