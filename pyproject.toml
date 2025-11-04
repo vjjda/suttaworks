@@ -1,0 +1,131 @@
+# Path: pyproject.toml
+
+
+
+
+
+[tool.black]
+# Cài đặt Black tiêu chuẩn để thống nhất
+line-length = 88
+# Sử dụng cùng phiên bản target với pyright để nhất quán
+target-version = ['py313']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.svn
+  | \.DS_Store
+  | \.venv
+  | __pycache__
+  | build
+  | dist
+  | node_modules
+  | venv
+  | out
+)/
+'''
+
+[tool.bootstrap]
+
+bin_dir = "bin"
+
+docs_dir = "docs"
+
+modules_dir = "modules"
+
+scripts_dir = "tools"
+
+[tool.cpath]
+
+extensions = ["css", "js", "py", "pyi", "scss", "sh", "template.toml", "ts", "zsh"]
+
+ignore = [".git", ".ruff_cache", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+[tool.forc]
+
+extensions = ["py"]
+
+ignore = [".DS_Store", ".git", ".hg", ".ruff_cache", ".svn", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+[tool.ndoc]
+
+extensions = ["py"]
+
+format_extensions = ["py"]
+
+ignore = [".DS_Store", ".git", ".gitignore", ".hg", ".ruff_cache", ".svn", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+[tool.pcode]
+
+clean_extensions = ["py", "sh", "zsh"]
+
+extensions = ["", "bash", "cfg", "cfg.py", "gitignore", "ini", "json", "md", "py", "sh", "template", "toml", "txt", "xml", "yaml", "yml", "zsh"]
+
+format_extensions = ["py"]
+
+ignore = [".DS_Store", ".git", ".hg", ".ruff_cache", ".svn", ".venv", "__pycache__", "venv"]
+
+include = []
+
+output_dir = "~/Documents/code.context"
+
+[tool.pyright]
+# Cấu hình môi trường thực thi
+executionEnvironments = [
+  { root = ".", pythonVersion = "3.14", extraPaths = ["modules", "utils", "scripts"] }
+]
+
+# Chế độ kiểm tra type cơ bản
+typeCheckingMode = "basic"
+
+# Tắt các báo cáo lỗi/cảnh báo cụ thể
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnusedImport = "none"
+reportUnsupportedDunderAll = "none"
+reportPossiblyUnboundVariable = "none"
+reportUnknownVariableType = "none"
+reportInvalidTypeForm = "none"
+reportArgumentType = "none"
+
+# Chỉ định các thư mục cần bao gồm và loại trừ
+include = ["utils", "modules", "scripts"]
+exclude = [
+  "**/__pycache__",
+  "**/.venv",
+  "**/venv",
+  "**/node_modules",
+  "/scripts/internal/bootstrap_templates/*"
+]
+
+[tool.sgen]
+
+ast_all_list_name = "__all__"
+
+ast_module_list_name = "modules_to_export"
+
+dynamic_import_indicators = ["globals()[name]", "globals().update"]
+
+ignore = ["*.pyc", "*.pyo", ".git", ".ruff_cache", ".venv", "__pycache__", "build", "dist", "node_modules", "out", "venv"]
+
+[tool.tree]
+
+dirs-only = []
+
+# extensions = 
+
+ignore = [".git", ".ruff_cache", ".venv", "__pycache__", "node_modules", "venv"]
+
+# level = 
+
+prune = ["build", "dist"]
+
+show-submodules = false
+
+use-gitignore = true
+
+[tool.ruff]
+extend-exclude = [
+  "data/*",
+]
