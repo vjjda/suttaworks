@@ -4,7 +4,6 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List
 
-
 logger = logging.getLogger(__name__)
 
 
