@@ -1,0 +1,38 @@
+#!/usr/bin/env zsh
+# Path: bin/budb
+
+# (zrap wrapper - relative mode)
+#
+# Dùng file này để chạy script bên trong dự án.
+# Nó dựa vào vị trí TƯƠNG ĐỐI của file này để tìm Project Root.
+# File này KHÔNG THỂ di chuyển. Dự án CÓ THỂ di chuyển.
+
+# --- 1. Thiết lập Đường dẫn Tương đối ---
+# Tìm thư mục chứa file wrapper này
+local SCRIPT_DIR
+SCRIPT_DIR=$( (cd -P -- "$(dirname -- "$0")" && pwd -P) )
+
+# Đường dẫn tương đối từ wrapper lên Project Root (do zrap tính toán)
+local PROJECT_ROOT_REL_TO_OUTPUT=".."
+local PROJECT_ROOT
+PROJECT_ROOT=$( (cd -P -- "$SCRIPT_DIR/$PROJECT_ROOT_REL_TO_OUTPUT" && pwd -P) )
+
+# Đường dẫn venv và script (tương đối so với Project Root)
+local VENV_PATH_REL_TO_PROJECT=".venv"
+local SCRIPT_PATH_REL_TO_PROJECT="src/db_builder/__main__.py"
+
+# Tính đường dẫn tuyệt đối cuối cùng
+local VENV_PATH_ABS="$PROJECT_ROOT/$VENV_PATH_REL_TO_PROJECT"
+local SCRIPT_PATH_ABS="$PROJECT_ROOT/$SCRIPT_PATH_REL_TO_PROJECT"
+
+# --- 2. Kích hoạt Môi trường ---
+if [ -f "$VENV_PATH_ABS/bin/activate" ]; then
+    source "$VENV_PATH_ABS/bin/activate"
+else
+    echo "zrap (relative): Lỗi: Không tìm thấy venv tại $VENV_PATH_ABS" >&2
+    exit 1
+fi
+
+# --- 3. Thực thi Script (Hỗ trợ Typer & Argcomplete) ---
+# Thêm $PROJECT_ROOT vào PYTHONPATH (inline) và thực thi script Python.
+PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH" python "$SCRIPT_PATH_ABS" "$@"
