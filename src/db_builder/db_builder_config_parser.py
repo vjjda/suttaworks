@@ -1,9 +1,9 @@
 # Path: src/db_builder/db_builder_config_parser.py
 
-import yaml
 import logging
 from pathlib import Path
 
+import yaml
 
 logger = logging.getLogger(__name__)
 

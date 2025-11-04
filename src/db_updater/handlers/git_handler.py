@@ -1,7 +1,7 @@
 # Path: src/db_updater/handlers/git_handler.py
+import configparser
 import logging
 import subprocess
-import configparser
 from pathlib import Path
 
 from src.config import constants

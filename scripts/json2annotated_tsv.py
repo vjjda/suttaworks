@@ -1,7 +1,6 @@
 # Path: scripts/json2annotated_tsv.py
-from pathlib import Path
 import json
-
+from pathlib import Path
 
 ROOT_PALI_DIR = Path("data/raw/git/suttacentral-data/sc_bilara_data/root/pli/ms/sutta")
 ROOT_EN_DIR = Path(

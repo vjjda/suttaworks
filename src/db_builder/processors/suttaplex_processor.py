@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from src.config.constants import PROJECT_ROOT
-from .suttaplex_extractor import SuttaplexExtractor
-from .json_path_processor import JsonPathProcessor
-from .html_processor import HtmlFileProcessor
+
 from .blurb_processor import BlurbSupplementProcessor
+from .html_processor import HtmlFileProcessor
+from .json_path_processor import JsonPathProcessor
+from .suttaplex_extractor import SuttaplexExtractor
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 # Path: src/db_updater/post_tasks/parallels/__init__.pyi
 """Statically declared API for parallels"""
 
-from typing import Any, List, Optional, Set, Dict, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Union
 
 build_initial_map: Any
 create_book_structure: Any

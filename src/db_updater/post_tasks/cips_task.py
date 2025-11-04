@@ -6,8 +6,8 @@ from src.config import constants
 
 from .cips import (
     process_tsv,
-    sort_topic_index,
     sort_sutta_index,
+    sort_topic_index,
     write_json_file,
 )
 

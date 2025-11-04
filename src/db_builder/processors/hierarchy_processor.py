@@ -1,9 +1,10 @@
 # Path: src/db_builder/processors/hierarchy_processor.py
 import json
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
-from collections import defaultdict
+
 from src.config.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,9 @@
 # Path: src/db_updater/post_tasks/cips_csv_task.py
-import logging
 import csv
+import logging
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from natsort import natsorted
 
 log = logging.getLogger(__name__)

@@ -1,8 +1,8 @@
 # Path: src/db_builder/processors/blurb_processor.py
+import csv
 import logging
 from pathlib import Path
 from typing import Any, Dict, List
-import csv
 
 logger = logging.getLogger(__name__)
 

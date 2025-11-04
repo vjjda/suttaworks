@@ -1,6 +1,7 @@
 # Path: src/db_updater/post_tasks/cips/cips_sorter.py
 from typing import Dict
-from natsort import natsorted, natsort_keygen
+
+from natsort import natsort_keygen, natsorted
 
 __all__ = ["sort_topic_index", "sort_sutta_index"]
 

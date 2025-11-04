@@ -1,14 +1,15 @@
 # Path: src/db_updater/handlers/gdrive_handler.py
-import os
-import re
 import json
 import logging
+import os
+import re
 from pathlib import Path
 from zipfile import ZipFile, is_zipfile
+
+import gdown
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-import gdown
 
 from src.db_updater.handlers.base_handler import BaseHandler
 

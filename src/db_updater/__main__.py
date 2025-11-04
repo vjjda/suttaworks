@@ -1,16 +1,17 @@
 # Path: src/db_updater/__main__.py
 import argparse
 import logging
+
 import argcomplete
 
-from src.config.logging_config import setup_logging
 from src.config import constants
-from src.db_updater.db_updater_config_parser import load_config
+from src.config.logging_config import setup_logging
 from src.db_updater.db_updater_arg_parser import CliArgsHandler
-from src.db_updater.handlers.git_release_handler import GitReleaseHandler
-from src.db_updater.handlers.git_handler import GitHandler
+from src.db_updater.db_updater_config_parser import load_config
 from src.db_updater.handlers.api_handler import ApiHandler
 from src.db_updater.handlers.gdrive_handler import GDriveHandler
+from src.db_updater.handlers.git_handler import GitHandler
+from src.db_updater.handlers.git_release_handler import GitReleaseHandler
 
 HANDLER_DISPATCHER = {
     "git-submodule": GitHandler,

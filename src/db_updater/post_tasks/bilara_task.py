@@ -1,8 +1,9 @@
 # Path: src/db_updater/post_tasks/bilara_task.py
-import logging
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from natsort import natsorted
 
 from src.config import constants

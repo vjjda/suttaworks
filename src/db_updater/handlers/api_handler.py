@@ -1,8 +1,9 @@
 # Path: src/db_updater/handlers/api_handler.py
-import logging
-import requests
 import json
+import logging
 from pathlib import Path
+
+import requests
 
 from src.db_updater.handlers.base_handler import BaseHandler
 

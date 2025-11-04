@@ -1,7 +1,8 @@
 # Path: src/db_updater/db_updater_config_parser.py
-import yaml
-from pathlib import Path
 import logging
+from pathlib import Path
+
+import yaml
 
 log = logging.getLogger(__name__)
 

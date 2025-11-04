@@ -2,6 +2,7 @@
 import re
 from collections import defaultdict
 from typing import Any
+
 from natsort import natsorted
 
 __all__ = ["get_book_id", "parse_sutta_id", "sort_data_naturally"]

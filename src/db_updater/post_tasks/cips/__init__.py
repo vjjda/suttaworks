@@ -1,7 +1,6 @@
 # Path: src/db_updater/post_tasks/cips/__init__.py
-import pkgutil
 import importlib
-
+import pkgutil
 
 __all__ = []
 for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):

@@ -3,15 +3,15 @@
 import logging
 from pathlib import Path
 
-from src.config.constants import PROJECT_ROOT, CONFIG_PATH
+from src.config.constants import CONFIG_PATH, PROJECT_ROOT
 from src.config.logging_config import setup_logging
-from src.db_builder.db_builder_config_parser import load_config
-from src.db_builder.db_builder_arg_parser import BuilderArgsParser
 from src.db_builder.database_manager import DatabaseManager
-from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
-from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
+from src.db_builder.db_builder_arg_parser import BuilderArgsParser
+from src.db_builder.db_builder_config_parser import load_config
 from src.db_builder.processors.biblio_processor import BiblioProcessor
 from src.db_builder.processors.bilara_tables_processor import BilaraTablesProcessor
+from src.db_builder.processors.hierarchy_processor import HierarchyProcessor
+from src.db_builder.processors.suttaplex_processor import SuttaplexProcessor
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 # Path: src/db_updater/handlers/base_handler.py
+import importlib
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-import importlib
 
 log = logging.getLogger(__name__)
 

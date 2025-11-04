@@ -1,9 +1,9 @@
 # Path: src/db_builder/processors/html_processor.py
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Set, Any
 from collections import defaultdict
+from pathlib import Path
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
 # Path: src/db_updater/post_tasks/parallels/parallels_transformer.py
 from collections import defaultdict
+
 from . import parallels_utils
 
 __all__ = [

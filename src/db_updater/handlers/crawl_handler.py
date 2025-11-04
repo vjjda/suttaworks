@@ -1,12 +1,13 @@
 # Path: src/db_updater/handlers/crawl_handler.py
-import requests
-from urllib.parse import urljoin, urlparse
-from pathlib import Path
-import time
 import logging
-import random
-from bs4 import BeautifulSoup
 import os
+import random
+import time
+from pathlib import Path
+from urllib.parse import urljoin, urlparse
+
+import requests
+from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
 
