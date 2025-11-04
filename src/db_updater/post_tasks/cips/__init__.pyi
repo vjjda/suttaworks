@@ -1,7 +1,8 @@
 # Path: src/db_updater/post_tasks/cips/__init__.pyi
 """Statically declared API for cips"""
 
-from typing import Any, List
+from typing import Any, List, Optional, Set, Dict, Union
+from pathlib import Path
 
 ParsedRow: Any
 parse_row: Any
