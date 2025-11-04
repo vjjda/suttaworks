@@ -3,7 +3,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from src.config.constants import PROJECT_ROOT
 

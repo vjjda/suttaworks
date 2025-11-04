@@ -1,7 +1,6 @@
 # Path: src/db_builder/__main__.py
 
 import logging
-from pathlib import Path
 
 from src.config.constants import CONFIG_PATH, PROJECT_ROOT
 from src.config.logging_config import setup_logging

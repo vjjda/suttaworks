@@ -4,7 +4,6 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.config.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +90,7 @@ class DatabaseManager:
 
                 self.conn.executescript(final_sql)
 
-            logger.info(f"✅ Đã tạo các bảng từ template thành công.")
+            logger.info("✅ Đã tạo các bảng từ template thành công.")
 
         except Exception as e:
             logger.error(f"Lỗi khi tạo bảng từ template: {e}", exc_info=True)

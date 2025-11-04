@@ -2,7 +2,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 from src.config import constants
 

@@ -1,6 +1,5 @@
 # Path: src/db_builder/processors/suttaplex_processor.py
 import logging
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from src.config.constants import PROJECT_ROOT

@@ -192,10 +192,10 @@ class GitReleaseHandler(BaseHandler):
             )
 
             if is_version_mismatch:
-                log.info(f"Phiên bản không khớp. Cần đồng bộ lại.")
+                log.info("Phiên bản không khớp. Cần đồng bộ lại.")
                 should_resync = True
             elif requested_assets_set != local_assets_set:
-                log.info(f"Danh sách assets đã thay đổi. Cần đồng bộ lại.")
+                log.info("Danh sách assets đã thay đổi. Cần đồng bộ lại.")
                 should_resync = True
 
             if not should_resync:

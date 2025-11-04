@@ -1,5 +1,4 @@
 # Path: src/db_updater/__main__.py
-import argparse
 import logging
 
 import argcomplete

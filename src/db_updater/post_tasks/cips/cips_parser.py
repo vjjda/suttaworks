@@ -1,6 +1,6 @@
 # Path: src/db_updater/post_tasks/cips/cips_parser.py
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 __all__ = ["ParsedRow", "parse_row"]
