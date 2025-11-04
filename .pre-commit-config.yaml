@@ -2,7 +2,7 @@
 repos:
   - repo: local
     hooks:
-      # 1️⃣ Hook ndoc (ĐÃ SỬA)
+      # 1️⃣ Hook ndoc (Cleaner)
       - id: ndoc
         name: "NDoc Code Cleaner"
         # Chạy ndoc VÀ git add lại các file đã xử lý ($@)
@@ -11,7 +11,16 @@ repos:
         types: [python]
         stages: [pre-commit]
 
-      # 2️⃣ Hook cpath (ĐÃ SỬA)
+      # 2️⃣ Hook Ruff (ĐÃ SỬA - Sắp xếp VÀ Xóa imports)
+      - id: ruff-imports
+        name: "Ruff Import Sorter/Cleaner"
+        # Chọn cả nhóm I (isort) VÀ F401 (UnusedImport)
+        entry: zsh -c 'ruff check --select I,F401 --fix "$@" && git add "$@"' --
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      # 3️⃣ Hook cpath (Metadata)
       - id: cpath
         name: "CPath Path Comment Checker"
         # Chạy cpath ở chế độ Force (-f) VÀ git add lại file ($@)
