@@ -1,6 +1,6 @@
 # Path: src/db_updater/post_tasks/cips_task.py
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 from src.config import constants
 
@@ -16,13 +16,36 @@ __all__ = ["run"]
 log = logging.getLogger(__name__)
 
 
-def run(task_config: Dict):
+def run(task_config: Dict[str, Any]):
     try:
-
         project_root = constants.PROJECT_ROOT
-        tsv_path = project_root / task_config["path"]
-        topic_output_file = project_root / task_config["output"]["topic-index"]
-        sutta_output_file = project_root / task_config["output"]["sutta-index"]
+
+        path_str = task_config.get("path")
+        if not isinstance(path_str, str):
+            log.error(
+                "Lỗi cấu hình 'cips-json': 'path' bị thiếu hoặc không phải string."
+            )
+            return
+        tsv_path = project_root / path_str
+
+        output_config = task_config.get("output")
+        if not isinstance(output_config, dict):
+            log.error(
+                "Lỗi cấu hình 'cips-json': 'output' bị thiếu hoặc không phải dict."
+            )
+            return
+
+        topic_path_str = output_config.get("topic-index")
+        sutta_path_str = output_config.get("sutta-index")
+
+        if not isinstance(topic_path_str, str) or not isinstance(sutta_path_str, str):
+            log.error(
+                "Lỗi cấu hình 'cips-json': 'output' thiếu 'topic-index' hoặc 'sutta-index'."
+            )
+            return
+
+        topic_output_file = project_root / topic_path_str
+        sutta_output_file = project_root / sutta_path_str
 
         if not tsv_path.is_file():
             log.error(f"File TSV nguồn không tồn tại: {tsv_path}")

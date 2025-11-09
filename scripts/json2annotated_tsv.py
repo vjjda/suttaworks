@@ -1,6 +1,7 @@
 # Path: scripts/json2annotated_tsv.py
 import json
 from pathlib import Path
+from typing import Any, Dict
 
 ROOT_PALI_DIR = Path("data/raw/git/suttacentral-data/sc_bilara_data/root/pli/ms/sutta")
 ROOT_EN_DIR = Path(
@@ -12,10 +13,16 @@ TAB_COUNT = 3
 
 
 def convert_pair_to_tsv(pali_path: Path, en_path: Path, output_path: Path):
-    with pali_path.open("r", encoding="utf-8") as f:
-        pali_data = json.load(f)
-    with en_path.open("r", encoding="utf-8") as f:
-        en_data = json.load(f)
+    try:
+        with pali_path.open("r", encoding="utf-8") as f:
+
+            pali_data: Dict[str, Any] = json.load(f)
+        with en_path.open("r", encoding="utf-8") as f:
+
+            en_data: Dict[str, Any] = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"❌ Lỗi JSON trong {pali_path.name} hoặc {en_path.name}: {e}")
+        return
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -23,17 +30,27 @@ def convert_pair_to_tsv(pali_path: Path, en_path: Path, output_path: Path):
     lines_written = 0
 
     with output_path.open("w", encoding="utf-8") as out:
+
+        if not isinstance(pali_data, dict):
+            print(f"⚠️  Nội dung {pali_path.name} không phải là dict. Bỏ qua.")
+            return
+
         for key, pali_value in pali_data.items():
-            if ":" not in key:
+            if not isinstance(key, str) or ":" not in key:
                 continue
+
+            pali_str = str(pali_value)
+
             prefix, affix = key.split(":", 1)
 
-            out.write(f"pli\t{prefix}\t{affix}{tab_sep}{pali_value}\n")
+            out.write(f"pli\t{prefix}\t{affix}{tab_sep}{pali_str}\n")
             lines_written += 1
 
-            if key in en_data:
+            if isinstance(en_data, dict) and key in en_data:
                 en_value = en_data[key]
-                out.write(f"en\t{prefix}\t{affix}{tab_sep}{en_value}\n")
+
+                en_str = str(en_value)
+                out.write(f"en\t{prefix}\t{affix}{tab_sep}{en_str}\n")
                 lines_written += 1
 
     print(
