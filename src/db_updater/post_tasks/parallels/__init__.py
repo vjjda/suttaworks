@@ -1,12 +1,16 @@
 # Path: src/db_updater/post_tasks/parallels/__init__.py
-import importlib
-import pkgutil
+from .parallels_processor import build_initial_map
+from .parallels_transformer import (
+    create_book_structure,
+    flatten_segment_map,
+    invert_to_segment_structure,
+)
+from .parallels_utils import sort_data_naturally
 
-__all__ = []
-for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
-    if not is_pkg:
-        module = importlib.import_module(f".{module_name}", __package__)
-        if hasattr(module, "__all__"):
-
-            globals().update({name: getattr(module, name) for name in module.__all__})
-            __all__.extend(module.__all__)
+__all__ = [
+    "build_initial_map",
+    "create_book_structure",
+    "flatten_segment_map",
+    "invert_to_segment_structure",
+    "sort_data_naturally",
+]
