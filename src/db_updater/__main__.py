@@ -11,7 +11,6 @@ from src.db_updater.db_updater_config_parser import load_config
 from src.db_updater.handlers.api_handler import ApiHandler
 from src.db_updater.handlers.gdrive_handler import GDriveHandler
 from src.db_updater.handlers.git_handler import GitHandler
-
 from src.db_updater.handlers.git_release import GitReleaseHandler
 
 HANDLER_DISPATCHER = {

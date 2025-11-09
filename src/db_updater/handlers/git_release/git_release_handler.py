@@ -5,10 +5,7 @@ from pathlib import Path
 
 from src.db_updater.handlers.base_handler import BaseHandler
 
-
-from . import git_release_api
-from . import git_release_file
-from . import git_release_state
+from . import git_release_api, git_release_file, git_release_state
 
 log = logging.getLogger(__name__)
 
