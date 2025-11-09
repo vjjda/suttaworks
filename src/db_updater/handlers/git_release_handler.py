@@ -57,7 +57,8 @@ class GitReleaseHandler(BaseHandler):
 
     def _get_local_state(self, path: Path) -> dict:
         default_state = {"tag": None, "assets": []}
-        version_file = path / ".version"
+
+        version_file = path / "version.json"
         if not version_file.exists():
             return default_state
 
@@ -73,7 +74,8 @@ class GitReleaseHandler(BaseHandler):
             return default_state
 
     def _save_local_state(self, path: Path, state: dict):
-        version_file = path / ".version"
+
+        version_file = path / "version.json"
         with open(version_file, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
 
