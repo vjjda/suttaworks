@@ -237,18 +237,39 @@ class GitReleaseHandler(BaseHandler):
 
                 try:
                     download_url = target_asset_info["browser_download_url"]
-                    archive_path = dest_path / asset_name
-                    self._download_file(download_url, archive_path)
 
                     extract_policy = asset_config["extract"]
                     extract_to_folder_policy = asset_config["extract_to_folder"]
                     final_extract_dir = dest_path
-                    if extract_policy and extract_to_folder_policy:
-                        final_extract_dir = dest_path / (
-                            asset_name
-                            if extract_to_folder_policy is True
-                            else extract_to_folder_policy
+
+                    is_extracting_to_folder = (
+                        extract_policy and extract_to_folder_policy
+                    )
+
+                    if is_extracting_to_folder:
+                        if extract_to_folder_policy is True:
+                            final_extract_dir = dest_path / asset_name
+                        else:
+
+                            final_extract_dir = dest_path / str(
+                                extract_to_folder_policy
+                            )
+
+                    archive_path = dest_path / asset_name
+
+                    if (
+                        is_extracting_to_folder
+                        and final_extract_dir.resolve() == archive_path.resolve()
+                    ):
+                        archive_path = dest_path / (asset_name + "._temp_download")
+                        log.warning(
+                            f"Phát hiện xung đột tên: Sẽ giải nén vào '{asset_name}'. "
+                            f"Đang tải về file tạm: {archive_path.name}"
                         )
+
+                    self._download_file(download_url, archive_path)
+
+                    if is_extracting_to_folder:
                         final_extract_dir.mkdir(parents=True, exist_ok=True)
 
                     self._decompress_archive(
