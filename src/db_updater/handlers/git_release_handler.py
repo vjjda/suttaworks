@@ -112,37 +112,51 @@ class GitReleaseHandler(BaseHandler):
 
         log.info(f"Đang xử lý file: {file_name_on_disk}")
 
-        if original_asset_name.endswith((".zip", ".epub")):
-            if force_extract or (auto_extract and original_asset_name.endswith(".zip")):
+        if force_extract:
+            log.info(f"Ép buộc giải nén (zip): {file_name_on_disk} -> {extract_dir}")
+            try:
+                with zipfile.ZipFile(archive_path, "r") as zip_ref:
+                    zip_ref.extractall(extract_dir)
+            except zipfile.BadZipFile:
+                log.error(
+                    f"Lỗi: Đã ép buộc giải nén nhưng '{file_name_on_disk}' (tên gốc: {original_asset_name}) không phải file zip hợp lệ."
+                )
+                should_delete_archive = False
+            except Exception as e:
+                log.error(f"Lỗi khi ép buộc giải nén zip: {e}")
+                should_delete_archive = False
+
+        elif auto_extract:
+            if original_asset_name.endswith(".zip"):
                 log.info(
-                    f"Đang giải nén (zip/epub): {file_name_on_disk} -> {extract_dir}"
+                    f"Tự động giải nén (zip): {file_name_on_disk} -> {extract_dir}"
                 )
                 with zipfile.ZipFile(archive_path, "r") as zip_ref:
                     zip_ref.extractall(extract_dir)
-            else:
-                should_delete_archive = False
-        elif original_asset_name.endswith((".tar.gz", ".tgz")):
-            if force_extract or auto_extract:
+
+            elif original_asset_name.endswith((".tar.gz", ".tgz")):
                 log.info(
-                    f"Đang giải nén (tar.gz): {file_name_on_disk} -> {extract_dir}"
+                    f"Tự động giải nén (tar.gz): {file_name_on_disk} -> {extract_dir}"
                 )
                 with tarfile.open(archive_path, "r:gz") as tar:
                     tar.extractall(path=extract_dir)
-            else:
-                should_delete_archive = False
-        elif original_asset_name.endswith(".tar.bz2"):
-            if force_extract or auto_extract:
+
+            elif original_asset_name.endswith(".tar.bz2"):
                 log.info(
-                    f"Đang giải nén (tar.bz2): {file_name_on_disk} -> {extract_dir}"
+                    f"Tự động giải nén (tar.bz2): {file_name_on_disk} -> {extract_dir}"
                 )
                 with tarfile.open(archive_path, "r:bz2") as tar:
                     tar.extractall(path=extract_dir)
+
             else:
+
+                log.info(
+                    f"Giữ nguyên file (auto-extract, không khớp loại): {file_name_on_disk}"
+                )
                 should_delete_archive = False
+
         else:
-            log.info(
-                f"Giữ nguyên file (không phải định dạng nén được hỗ trợ tự động): {file_name_on_disk}"
-            )
+            log.info(f"Giữ nguyên file (không giải nén): {file_name_on_disk}")
             should_delete_archive = False
 
         if should_delete_archive:
