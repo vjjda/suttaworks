@@ -11,7 +11,7 @@ from src.db_updater.handlers.base_handler import BaseHandler
 log = logging.getLogger(__name__)
 
 
-MAX_DOWNLOAD_WORKERS = 20
+MAX_DOWNLOAD_WORKERS = 10
 
 
 class ApiHandler(BaseHandler):
