@@ -35,7 +35,10 @@ class GitReleaseHandler(BaseHandler):
     def _parse_repo_url(self, url: str) -> tuple[str, str] | None:
         match = re.search(r"github\.com/([^/]+)/([^/]+)", url)
         if match:
-            return match.groups()
+            groups = match.groups()
+
+            if len(groups) == 2:
+                return (groups[0], groups[1])
         return None
 
     def _get_release_info(self, owner: str, repo: str, version: str) -> dict | None:
@@ -80,9 +83,15 @@ class GitReleaseHandler(BaseHandler):
             with requests.get(url, stream=True, headers=self.headers) as r:
                 r.raise_for_status()
                 total_size = int(r.headers.get("content-length", 0))
-                with open(dest_path, "wb") as f, tqdm(
-                    total=total_size, unit="iB", unit_scale=True, desc=dest_path.name
-                ) as bar:
+                with (
+                    open(dest_path, "wb") as f,
+                    tqdm(
+                        total=total_size,
+                        unit="iB",
+                        unit_scale=True,
+                        desc=dest_path.name,
+                    ) as bar,
+                ):
                     for chunk in r.iter_content(chunk_size=8192):
                         size = f.write(chunk)
                         bar.update(size)
