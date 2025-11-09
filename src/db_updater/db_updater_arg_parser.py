@@ -48,9 +48,9 @@ class CliArgsHandler:
             "--tasks",
             type=str,
             help="Chạy tác vụ hậu xử lý cụ thể.\nCHỈ hoạt động khi chọn một module.",
-            completer=self._task_completer,
         )
 
+        tasks_arg.completer = self._task_completer  # type: ignore [reportAttributeAccessIssue]
         return parser
 
     def get_available_tasks(self, module_name: str) -> list[str]:
