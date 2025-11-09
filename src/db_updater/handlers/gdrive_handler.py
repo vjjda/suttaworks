@@ -128,6 +128,14 @@ class GDriveHandler(BaseHandler):
         gdown.download(id=latest_file["id"], output=str(zip_path), quiet=False)
 
         extract_dir_name = self.handler_config.get("extract")
+
+        if not isinstance(extract_dir_name, str):
+            log.error(
+                "Thiếu cấu hình 'extract' (string) trong updater_config.yaml. Dừng."
+            )
+            zip_path.unlink()
+            return
+
         extract_path = self.destination_dir / extract_dir_name
         log.info(f"Đang giải nén vào: {extract_path}...")
         if is_zipfile(zip_path):
