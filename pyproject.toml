@@ -73,7 +73,8 @@ output_dir = "~/Documents/code.context"
 [tool.pyright]
 # Cấu hình môi trường thực thi
 executionEnvironments = [
-  { root = ".", pythonVersion = "3.14", extraPaths = ["modules", "utils", "scripts"] }
+  { root = ".", pythonVersion = "3.14", extraPaths = ["modules", "utils", "scripts", "src"] }
+
 ]
 
 # Chế độ kiểm tra type cơ bản
@@ -90,13 +91,12 @@ reportInvalidTypeForm = "none"
 reportArgumentType = "none"
 
 # Chỉ định các thư mục cần bao gồm và loại trừ
-include = ["utils", "modules", "scripts"]
+include = ["utils", "modules", "scripts", "src"]
 exclude = [
   "**/__pycache__",
   "**/.venv",
   "**/venv",
   "**/node_modules",
-  "/scripts/internal/bootstrap_templates/*"
 ]
 
 [tool.sgen]
