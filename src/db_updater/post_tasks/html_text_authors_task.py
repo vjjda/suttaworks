@@ -56,20 +56,35 @@ def process_html_text_authors_data(config: Dict, project_root: Path):
             soup = BeautifulSoup(content, "html.parser")
             meta_tag = soup.find("meta", attrs={"name": "author"})
 
-            if meta_tag and meta_tag.get("content"):
-                author = meta_tag.get("content").strip()
-                relative_path = html_file.relative_to(base_path)
-                path_parts = relative_path.parts
-
-                current_level = author_map
-                for part in path_parts[:-1]:
-                    current_level = current_level.setdefault(part, {})
-
-                current_level[path_parts[-1]] = author
-            else:
+            if not meta_tag:
                 log.warning(
                     f"Không tìm thấy thẻ <meta name='author'> trong file: {html_file.name}"
                 )
+                continue
+
+            author_content = meta_tag.get("content")
+
+            if not isinstance(author_content, str):
+                log.warning(
+                    f"Thẻ <meta name='author'> có content không hợp lệ (không phải string) trong file: {html_file.name}"
+                )
+                continue
+
+            author = author_content.strip()
+            if not author:
+                log.warning(
+                    f"Thẻ <meta name='author'> có content rỗng trong file: {html_file.name}"
+                )
+                continue
+
+            relative_path = html_file.relative_to(base_path)
+            path_parts = relative_path.parts
+
+            current_level = author_map
+            for part in path_parts[:-1]:
+                current_level = current_level.setdefault(part, {})
+
+            current_level[path_parts[-1]] = author
 
         except Exception as e:
             log.error(f"Lỗi khi xử lý file {html_file.name}: {e}")
