@@ -268,8 +268,10 @@ class GitReleaseHandler(BaseHandler):
                     )
 
                     if is_extracting_to_folder:
+
                         if extract_to_folder_policy is True:
-                            final_extract_dir = dest_path / asset_name
+                            folder_name = Path(asset_name).stem
+                            final_extract_dir = dest_path / folder_name
                         else:
                             final_extract_dir = dest_path / str(
                                 extract_to_folder_policy
@@ -283,7 +285,7 @@ class GitReleaseHandler(BaseHandler):
                     ):
                         archive_path = dest_path / (asset_name + "._temp_download")
                         log.warning(
-                            f"Phát hiện xung đột tên: Sẽ giải nén vào '{asset_name}'. "
+                            f"Phát hiện xung đột tên: Sẽ giải nén vào '{final_extract_dir.name}'. "
                             f"Đang tải về file tạm: {archive_path.name}"
                         )
 
