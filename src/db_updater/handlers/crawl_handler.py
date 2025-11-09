@@ -102,7 +102,13 @@ class Crawler:
         tags_with_links = soup.find_all(href=True) + soup.find_all(src=True)
         for tag in tags_with_links:
             link = tag.get("href") or tag.get("src")
-            if not link or link.startswith("#") or link.startswith("mailto:"):
+
+            if (
+                not link
+                or not isinstance(link, str)
+                or link.startswith("#")
+                or link.startswith("mailto:")
+            ):
                 continue
             absolute_link = urljoin(base_url, link).split("#")[0]
             found_urls.add(absolute_link)
