@@ -102,45 +102,52 @@ class GitReleaseHandler(BaseHandler):
     def _decompress_archive(
         self,
         archive_path: Path,
+        original_asset_name: str,
         extract_dir: Path,
         force_extract: bool,
         auto_extract: bool,
     ):
-        file_name = archive_path.name
+        file_name_on_disk = archive_path.name
         should_delete_archive = True
 
-        log.info(f"Đang xử lý file: {file_name}")
+        log.info(f"Đang xử lý file: {file_name_on_disk}")
 
-        if file_name.endswith((".zip", ".epub")):
-            if force_extract or (auto_extract and file_name.endswith(".zip")):
-                log.info(f"Đang giải nén (zip/epub): {file_name}")
+        if original_asset_name.endswith((".zip", ".epub")):
+            if force_extract or (auto_extract and original_asset_name.endswith(".zip")):
+                log.info(
+                    f"Đang giải nén (zip/epub): {file_name_on_disk} -> {extract_dir}"
+                )
                 with zipfile.ZipFile(archive_path, "r") as zip_ref:
                     zip_ref.extractall(extract_dir)
             else:
                 should_delete_archive = False
-        elif file_name.endswith((".tar.gz", ".tgz")):
+        elif original_asset_name.endswith((".tar.gz", ".tgz")):
             if force_extract or auto_extract:
-                log.info(f"Đang giải nén (tar.gz): {file_name}")
+                log.info(
+                    f"Đang giải nén (tar.gz): {file_name_on_disk} -> {extract_dir}"
+                )
                 with tarfile.open(archive_path, "r:gz") as tar:
                     tar.extractall(path=extract_dir)
             else:
                 should_delete_archive = False
-        elif file_name.endswith(".tar.bz2"):
+        elif original_asset_name.endswith(".tar.bz2"):
             if force_extract or auto_extract:
-                log.info(f"Đang giải nén (tar.bz2): {file_name}")
+                log.info(
+                    f"Đang giải nén (tar.bz2): {file_name_on_disk} -> {extract_dir}"
+                )
                 with tarfile.open(archive_path, "r:bz2") as tar:
                     tar.extractall(path=extract_dir)
             else:
                 should_delete_archive = False
         else:
             log.info(
-                f"Giữ nguyên file (không phải định dạng nén được hỗ trợ tự động): {file_name}"
+                f"Giữ nguyên file (không phải định dạng nén được hỗ trợ tự động): {file_name_on_disk}"
             )
             should_delete_archive = False
 
         if should_delete_archive:
             os.remove(archive_path)
-            log.info("Giải nén hoàn tất và đã xóa file nén.")
+            log.info(f"Giải nén hoàn tất và đã xóa file nén: {file_name_on_disk}")
 
     def execute(self):
         log.info("Bắt đầu cập nhật dữ liệu từ GitHub Releases.")
@@ -250,7 +257,6 @@ class GitReleaseHandler(BaseHandler):
                         if extract_to_folder_policy is True:
                             final_extract_dir = dest_path / asset_name
                         else:
-
                             final_extract_dir = dest_path / str(
                                 extract_to_folder_policy
                             )
@@ -274,6 +280,7 @@ class GitReleaseHandler(BaseHandler):
 
                     self._decompress_archive(
                         archive_path,
+                        asset_name,
                         final_extract_dir,
                         extract_policy is True,
                         extract_policy == "auto",
