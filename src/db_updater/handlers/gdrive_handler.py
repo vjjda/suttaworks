@@ -80,13 +80,22 @@ class GDriveHandler(BaseHandler):
             return
 
         version_regex = self.handler_config.get("version-date")
+
+        if not version_regex:
+            log.error("Thiếu cấu hình 'version-date' trong updater_config.yaml. Dừng.")
+            return
+
         latest_version = 0
         latest_file = None
         for file in files:
-            match = re.search(version_regex, file["name"])
+            file_name = file.get("name")
+            if not file_name:
+                continue
+
+            match = re.search(version_regex, file_name)
             if match:
                 version = int(match.group(1))
-                if version > latest_version and file["name"].endswith(".zip"):
+                if version > latest_version and file_name.endswith(".zip"):
                     latest_version = version
                     latest_file = file
 
@@ -95,7 +104,7 @@ class GDriveHandler(BaseHandler):
             return
 
         log.info(
-            f"Phiên bản mới nhất online: {latest_version} (file: {latest_file['name']})"
+            f"Phiên bản mới nhất online: {latest_version} (file: {latest_file.get('name')})"
         )
 
         version_file = self.destination_dir / "version.json"
@@ -106,9 +115,16 @@ class GDriveHandler(BaseHandler):
             log.info("Dữ liệu đã là phiên bản mới nhất. Không cần cập nhật.")
             return
 
+        file_name = latest_file.get("name")
+        if not isinstance(file_name, str):
+            log.error(
+                f"Tên file không hợp lệ (không phải string) từ API: {file_name}. Dừng."
+            )
+            return
+
         self.destination_dir.mkdir(parents=True, exist_ok=True)
-        zip_path = self.destination_dir / latest_file["name"]
-        log.info(f"Đang tải file mới: {latest_file['name']}...")
+        zip_path = self.destination_dir / file_name
+        log.info(f"Đang tải file mới: {file_name}...")
         gdown.download(id=latest_file["id"], output=str(zip_path), quiet=False)
 
         extract_dir_name = self.handler_config.get("extract")
@@ -119,10 +135,9 @@ class GDriveHandler(BaseHandler):
                 zip_ref.extractall(extract_path)
         else:
             log.error("File tải về không phải là file zip hợp lệ.")
-
             zip_path.unlink()
             return
 
-        self._write_local_version(version_file, latest_version, latest_file["name"])
+        self._write_local_version(version_file, latest_version, file_name)
         zip_path.unlink()
         log.info(f"Đã xóa file tạm: {zip_path.name}")
